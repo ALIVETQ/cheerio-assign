@@ -40,3 +40,6 @@ lerna-debug.log*
 
 # Vercel
 .vercel
+
+# Saved webpages (not part of the project)
+AI agent for customer support*
