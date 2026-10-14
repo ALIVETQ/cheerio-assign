@@ -1087,3 +1087,31 @@ body {
   color: #92400E;
 }
 .step-tooltip-btn--stuck:hover { background: #FDE68A; }
+
+/* ===================================================================
+   CAMPAIGN REVIEW / SUCCESS — Phase 3B (ASSUMED UI)
+   =================================================================== */
+.campaign-review-grid {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.review-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+.review-row:last-child { border-bottom: none; }
+.review-label { color: var(--text-secondary); min-width: 160px; flex-shrink: 0; }
+.review-value { color: var(--text-primary); font-weight: 500; }
+.campaign-schedule-box {
+  background: #F9FAFB;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}

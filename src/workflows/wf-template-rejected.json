@@ -1,0 +1,54 @@
+{
+  "id": "wf-template-rejected",
+  "title": "Fix a rejected WhatsApp template",
+  "description": "Diagnose why your template was rejected, fix it, and resubmit for approval",
+  "keywords": ["template rejected", "template not approved", "template failed", "fix template", "rejected", "template ka issue", "template problem", "resubmit template", "template error"],
+  "examplePhrases": [
+    "my template got rejected",
+    "template is not approved",
+    "how to fix rejected template",
+    "mera template reject ho gaya"
+  ],
+  "level": 2,
+  "estimatedMinutes": 3,
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "tr1",
+      "title": "Find the rejected template",
+      "instruction": "Go to Templates. I'll point out the rejected template and explain why it was rejected.",
+      "target": "[data-tour='rejected-template-row']",
+      "route": "/templates",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    },
+    {
+      "id": "tr2",
+      "title": "Open the template editor",
+      "instruction": "Click Edit on the rejected template to open it for changes.",
+      "target": "[data-tour='template-edit-btn']",
+      "route": "/templates",
+      "completeOn": { "type": "click", "target": "[data-tour='template-edit-btn']" },
+      "mode": "guide"
+    },
+    {
+      "id": "tr3",
+      "title": "Fix the template text",
+      "instruction": "I've drafted a corrected version below. Check it and make any changes before continuing.",
+      "target": "[data-tour='template-body-input']",
+      "route": "/templates",
+      "completeOn": { "type": "inputFilled", "target": "[data-tour='template-body-input']" },
+      "mode": "assist",
+      "prefill": { "target": "[data-tour='template-body-input']", "value": "Hi {{1}}, great news — our Diwali offers are live! Visit {{2}} to see all deals. Reply STOP to unsubscribe." }
+    },
+    {
+      "id": "tr4",
+      "title": "Save and resubmit",
+      "instruction": "Click Save to submit the corrected template for review. It will move to Pending status.",
+      "target": "[data-tour='template-save-btn']",
+      "route": "/templates",
+      "completeOn": { "type": "click", "target": "[data-tour='template-save-btn']" },
+      "mode": "guide"
+    }
+  ]
+}

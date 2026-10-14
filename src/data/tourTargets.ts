@@ -19,6 +19,9 @@ export const REQUIRED_TOUR_TARGETS: Array<{ selector: string; route: string; des
   { selector: "[data-tour='channel-whatsapp']", route: '/', description: 'WhatsApp checkbox in Choose Channels' },
   { selector: "[data-tour='credit-summary']", route: '/', description: 'Credit Required vs Available summary' },
   { selector: "[data-tour='campaign-next-btn']", route: '/', description: 'Next button in New Campaign modal' },
+  { selector: "[data-tour='campaign-review-section']", route: '/', description: 'Campaign review section (ASSUMED UI)' },
+  { selector: "[data-tour='campaign-send-btn']", route: '/', description: 'Send Now button in campaign review (ASSUMED UI)' },
+  { selector: "[data-tour='campaign-success-screen']", route: '/', description: 'Campaign success screen (ASSUMED UI)' },
 
   // wf-connect-whatsapp
   { selector: "[data-tour='channels-page']", route: '/channels', description: 'Channels settings page' },
@@ -33,10 +36,12 @@ export const REQUIRED_TOUR_TARGETS: Array<{ selector: string; route: string; des
   // wf-template-rejected
   { selector: "[data-tour='rejected-template-row']", route: '/templates', description: 'Rejected template row' },
   { selector: "[data-tour='template-edit-btn']", route: '/templates', description: 'Edit template button' },
+  { selector: "[data-tour='template-save-btn']", route: '/templates', description: 'Save template button' },
 
   // wf-chatbot-flow
   { selector: "[data-tour='workflows-page']", route: '/workflows', description: 'Workflows page' },
   { selector: "[data-tour='workflow-create-btn']", route: '/workflows', description: 'Create workflow button' },
+  { selector: "[data-tour='workflow-save-btn']", route: '/workflows', description: 'Save workflow button' },
 
   // wf-connect-shopify
   { selector: "[data-tour='integrations-page']", route: '/integrations', description: 'Integrations page' },

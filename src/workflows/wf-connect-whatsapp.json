@@ -1,0 +1,52 @@
+{
+  "id": "wf-connect-whatsapp",
+  "title": "Connect your WhatsApp number",
+  "description": "Link your WhatsApp Business number to Cheerio so you can send campaigns",
+  "keywords": ["connect whatsapp", "whatsapp setup", "whatsapp number", "link whatsapp", "whatsapp connect karo", "whatsapp add karna"],
+  "examplePhrases": [
+    "how do I connect my WhatsApp",
+    "WhatsApp number connect karna hai",
+    "set up WhatsApp"
+  ],
+  "level": 1,
+  "estimatedMinutes": 3,
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "cwa1",
+      "title": "Go to Channel Settings",
+      "instruction": "Click Channels in the sidebar to open your channel settings.",
+      "target": "[data-tour='sidebar-workflows']",
+      "route": "/channels",
+      "completeOn": { "type": "routeChanged", "route": "/channels" },
+      "mode": "guide"
+    },
+    {
+      "id": "cwa2",
+      "title": "Find WhatsApp",
+      "instruction": "You'll see the WhatsApp card. Click 'Connect WhatsApp' to start.",
+      "target": "[data-tour='whatsapp-connect-btn']",
+      "route": "/channels",
+      "completeOn": { "type": "click", "target": "[data-tour='whatsapp-connect-btn']" },
+      "mode": "guide"
+    },
+    {
+      "id": "cwa3",
+      "title": "Follow the connection steps",
+      "instruction": "Complete the on-screen steps to verify your WhatsApp Business number.",
+      "target": "[data-tour='channels-page']",
+      "route": "/channels",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    },
+    {
+      "id": "cwa4",
+      "title": "Confirm connection",
+      "instruction": "Once connected, the status will show a green 'Connected' badge. You're all set!",
+      "target": "[data-tour='channels-page']",
+      "route": "/channels",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    }
+  ]
+}

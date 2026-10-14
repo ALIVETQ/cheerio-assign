@@ -1,0 +1,61 @@
+{
+  "id": "wf-create-template",
+  "title": "Create a message template",
+  "description": "Write and submit a new WhatsApp message template for approval",
+  "keywords": ["create template", "new template", "message template", "template banana", "add template", "wa template", "whatsapp template"],
+  "examplePhrases": [
+    "how do I create a template",
+    "I need a new WhatsApp template",
+    "template banana hai"
+  ],
+  "level": 2,
+  "estimatedMinutes": 3,
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "ct1",
+      "title": "Go to Templates",
+      "instruction": "Navigate to the Templates page from the sidebar.",
+      "target": "[data-tour='templates-page']",
+      "route": "/templates",
+      "completeOn": { "type": "routeChanged", "route": "/templates" },
+      "mode": "guide"
+    },
+    {
+      "id": "ct2",
+      "title": "Create a new template",
+      "instruction": "Click '+ Create Template' to open the template editor.",
+      "target": "[data-tour='create-template-btn']",
+      "route": "/templates",
+      "completeOn": { "type": "click", "target": "[data-tour='create-template-btn']" },
+      "mode": "guide"
+    },
+    {
+      "id": "ct3",
+      "title": "Enter a template name",
+      "instruction": "Give your template a clear name so you can find it later.",
+      "target": "[data-tour='template-name-input']",
+      "route": "/templates",
+      "completeOn": { "type": "inputFilled", "target": "[data-tour='template-name-input']" },
+      "mode": "guide"
+    },
+    {
+      "id": "ct4",
+      "title": "Write the template body",
+      "instruction": "Write your message. Use {{1}}, {{2}} for personalised fields like the customer's name.",
+      "target": "[data-tour='template-body-input']",
+      "route": "/templates",
+      "completeOn": { "type": "inputFilled", "target": "[data-tour='template-body-input']" },
+      "mode": "guide"
+    },
+    {
+      "id": "ct5",
+      "title": "Save and submit",
+      "instruction": "Click Save to submit your template to WhatsApp for approval. It usually takes a few hours.",
+      "target": "[data-tour='template-save-btn']",
+      "route": "/templates",
+      "completeOn": { "type": "click", "target": "[data-tour='template-save-btn']" },
+      "mode": "guide"
+    }
+  ]
+}

@@ -21,6 +21,7 @@ export default function TemplatesPage() {
         {/* Hidden anchors for workflow tour targets — always present */}
         <input type="hidden" data-tour="template-name-input" aria-hidden="true" />
         <input type="hidden" data-tour="template-body-input" aria-hidden="true" />
+        <button type="button" data-tour="template-save-btn" aria-hidden="true" style={{ display: 'none' }} />
         <div className="page-header-row">
           <h2>Message Templates</h2>
           <button className="btn-primary" data-tour="create-template-btn">+ Create Template</button>
@@ -90,7 +91,7 @@ export default function TemplatesPage() {
               />
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn-primary" onClick={() => setEditingId(null)}>Save</button>
+              <button className="btn-primary" data-tour="template-save-btn" onClick={() => setEditingId(null)}>Save</button>
               <button className="btn-outline" onClick={() => setEditingId(null)}>Cancel</button>
             </div>
           </div>

@@ -1,0 +1,108 @@
+{
+  "id": "wf-first-campaign",
+  "title": "Set up your first WhatsApp campaign",
+  "description": "Create and send your first WhatsApp broadcast to a contact segment",
+  "keywords": ["campaign", "broadcast", "send message", "whatsapp campaign", "first campaign", "campaign kaise banaye", "message bhejna", "bulk message", "send wa", "create campaign", "new campaign", "shoot campaign", "pehla campaign"],
+  "examplePhrases": [
+    "I don't know how to set up my first WhatsApp campaign",
+    "how do I send a bulk message",
+    "how to create a campaign",
+    "mujhe campaign banana hai"
+  ],
+  "level": 2,
+  "estimatedMinutes": 4,
+  "preconditions": ["whatsapp_connected", "has_contacts", "has_approved_template"],
+  "steps": [
+    {
+      "id": "s1",
+      "title": "Check WhatsApp is connected",
+      "instruction": "Open the 'Setup a channel' section and confirm WhatsApp shows Completed.",
+      "target": "[data-tour='setup-channel-accordion']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='setup-channel-accordion']" },
+      "mode": "guide"
+    },
+    {
+      "id": "s2",
+      "title": "Confirm WhatsApp is ready",
+      "instruction": "You should see a green 'Completed' check next to WhatsApp. Great — you're all set!",
+      "target": "[data-tour='whatsapp-channel-tile']",
+      "route": "/",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    },
+    {
+      "id": "s3",
+      "title": "Check your audience",
+      "instruction": "Open 'Build an audience' and confirm the CSV File tile shows Completed.",
+      "target": "[data-tour='build-audience-accordion']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='build-audience-accordion']" },
+      "mode": "guide"
+    },
+    {
+      "id": "s4",
+      "title": "Audience confirmed",
+      "instruction": "Contacts are uploaded. Now let's make sure you have an approved template.",
+      "target": "[data-tour='csv-upload-tile']",
+      "route": "/",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    },
+    {
+      "id": "s5",
+      "title": "Check your templates",
+      "instruction": "Let's verify you have an approved WhatsApp template. Click 'Create content' to open it.",
+      "target": "[data-tour='create-content-accordion']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='create-content-accordion']" },
+      "mode": "guide"
+    },
+    {
+      "id": "s6",
+      "title": "Start a new campaign",
+      "instruction": "All set! Click 'New campaign' to begin.",
+      "target": "[data-tour='new-campaign-btn']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='new-campaign-btn']" },
+      "mode": "guide"
+    },
+    {
+      "id": "s7",
+      "title": "Name your campaign",
+      "instruction": "I've suggested a name. Check it and update it if you like.",
+      "target": "[data-tour='campaign-name']",
+      "route": "/",
+      "completeOn": { "type": "inputFilled", "target": "[data-tour='campaign-name']" },
+      "mode": "assist",
+      "prefill": { "target": "[data-tour='campaign-name']", "value": "My First WhatsApp Campaign" }
+    },
+    {
+      "id": "s8",
+      "title": "Choose a contact segment",
+      "instruction": "Pick the segment you want to message from the dropdown.",
+      "target": "[data-tour='campaign-segment']",
+      "route": "/",
+      "completeOn": { "type": "selectChanged", "target": "[data-tour='campaign-segment']" },
+      "mode": "guide"
+    },
+    {
+      "id": "s9",
+      "title": "Select WhatsApp as your channel",
+      "instruction": "Tick WhatsApp. You can untick Email and SMS for this campaign.",
+      "target": "[data-tour='channel-whatsapp']",
+      "route": "/",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    },
+    {
+      "id": "s10",
+      "title": "Review and send",
+      "instruction": "Click 'Next' to review your campaign settings, then hit Send.",
+      "target": "[data-tour='campaign-next-btn']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='campaign-next-btn']" },
+      "mode": "guide"
+    }
+  ]
+}

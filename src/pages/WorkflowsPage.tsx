@@ -11,7 +11,10 @@ export default function WorkflowsPage() {
       <div className="page-content" data-tour="workflows-page">
         <div className="page-header-row">
           <h2>Workflows</h2>
-          <button className="btn-primary" data-tour="workflow-create-btn">+ Create Workflow</button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn-primary" data-tour="workflow-create-btn">+ Create Workflow</button>
+            <button className="btn-outline" data-tour="workflow-save-btn">Save</button>
+          </div>
         </div>
         <table className="data-table">
           <thead>

@@ -1,0 +1,62 @@
+{
+  "id": "wf-chatbot-flow",
+  "title": "Build a simple chatbot flow",
+  "description": "Create an automated WhatsApp reply flow using the visual workflow editor",
+  "keywords": ["chatbot", "automation", "workflow", "auto reply", "bot banana", "automated message", "flow banana", "whatsapp bot"],
+  "examplePhrases": [
+    "how to build a chatbot",
+    "I want to automate replies",
+    "chatbot banana hai",
+    "set up automation"
+  ],
+  "level": 1,
+  "estimatedMinutes": 5,
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "cb1",
+      "title": "Go to Workflows",
+      "instruction": "Click the Workflows icon (🤖) in the sidebar.",
+      "target": "[data-tour='sidebar-workflows']",
+      "route": "/workflows",
+      "completeOn": { "type": "routeChanged", "route": "/workflows" },
+      "mode": "guide"
+    },
+    {
+      "id": "cb2",
+      "title": "Create a new workflow",
+      "instruction": "Click '+ Create Workflow' to open the visual editor.",
+      "target": "[data-tour='workflow-create-btn']",
+      "route": "/workflows",
+      "completeOn": { "type": "click", "target": "[data-tour='workflow-create-btn']" },
+      "mode": "guide"
+    },
+    {
+      "id": "cb3",
+      "title": "Add a trigger event",
+      "instruction": "Drag 'Incoming WhatsApp' from the Events palette onto the canvas as your trigger.",
+      "target": "[data-tour='workflows-page']",
+      "route": "/workflows",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    },
+    {
+      "id": "cb4",
+      "title": "Add a response",
+      "instruction": "Drag 'Response message' onto the canvas and connect it to your trigger.",
+      "target": "[data-tour='workflows-page']",
+      "route": "/workflows",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    },
+    {
+      "id": "cb5",
+      "title": "Save your flow",
+      "instruction": "Click Save to activate your new chatbot flow. It will start responding automatically.",
+      "target": "[data-tour='workflow-save-btn']",
+      "route": "/workflows",
+      "completeOn": { "type": "click", "target": "[data-tour='workflow-save-btn']" },
+      "mode": "guide"
+    }
+  ]
+}

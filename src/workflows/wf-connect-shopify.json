@@ -1,0 +1,43 @@
+{
+  "id": "wf-connect-shopify",
+  "title": "Connect your Shopify store",
+  "description": "Link your Shopify store to Cheerio to sync customers and trigger automated messages",
+  "keywords": ["shopify", "connect shopify", "shopify sync", "ecommerce", "shopify integrate", "shopify connect karo", "store connect"],
+  "examplePhrases": [
+    "how to connect Shopify",
+    "Shopify se Cheerio connect karna hai",
+    "integrate my store"
+  ],
+  "level": 1,
+  "estimatedMinutes": 3,
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "cs1",
+      "title": "Go to Integrations",
+      "instruction": "Click Integrations (🔗) in the sidebar.",
+      "target": "[data-tour='integrations-page']",
+      "route": "/integrations",
+      "completeOn": { "type": "routeChanged", "route": "/integrations" },
+      "mode": "guide"
+    },
+    {
+      "id": "cs2",
+      "title": "Connect Shopify",
+      "instruction": "Find the Shopify card and click 'Connect Shopify'.",
+      "target": "[data-tour='shopify-connect-btn']",
+      "route": "/integrations",
+      "completeOn": { "type": "click", "target": "[data-tour='shopify-connect-btn']" },
+      "mode": "guide"
+    },
+    {
+      "id": "cs3",
+      "title": "Complete the setup",
+      "instruction": "Enter your Shopify store URL and follow the on-screen steps to authorise the connection.",
+      "target": "[data-tour='integrations-page']",
+      "route": "/integrations",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    }
+  ]
+}

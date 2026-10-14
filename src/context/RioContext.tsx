@@ -51,7 +51,10 @@ interface RioContextValue {
 interface RioProviderProps {
   children: ReactNode;
   /** Called when the user clicks Start on an offer card. Phase 3 wires this to the engine. */
-  onStartWorkflow?: (offer: WorkflowOffer) => void;
+  onStartWorkflow?: (
+    offer: WorkflowOffer,
+    onPrereqFailed: (msg: { text?: string; offer?: WorkflowOffer }) => void
+  ) => void;
 }
 
 // ─── Context ─────────────────────────────────────────────────────────────────
@@ -131,8 +134,15 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
     setMessages((prev) => {
       const msg = prev.find((m) => m.id === messageId);
       if (msg?.offer && onStartWorkflow) {
-        // Call outside the setter to avoid setState-in-setState
-        setTimeout(() => onStartWorkflow(msg.offer!), 0);
+        setTimeout(() => {
+          onStartWorkflow(msg.offer!, (prereqMsg) => {
+            if (prereqMsg.text) {
+              setMessages((prev2) => [...prev2, { id: nextId(), role: 'rio', text: prereqMsg.text }]);
+            } else if (prereqMsg.offer) {
+              setMessages((prev2) => [...prev2, { id: nextId(), role: 'rio', offer: prereqMsg.offer }]);
+            }
+          });
+        }, 0);
       }
       return prev;
     });
