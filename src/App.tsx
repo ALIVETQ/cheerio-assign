@@ -1,9 +1,20 @@
+import { BrowserRouter } from 'react-router-dom';
+import { AccountProvider } from './context/AccountContext';
+import { RioProvider } from './context/RioContext';
+import AppRoutes from './AppRoutes';
+import RioWidget from './components/rio/RioWidget';
+
 function App() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <h1>Rio prototype: Phase 0</h1>
-    </div>
-  )
+    <AccountProvider>
+      <BrowserRouter>
+        <RioProvider>
+          <AppRoutes />
+          <RioWidget />
+        </RioProvider>
+      </BrowserRouter>
+    </AccountProvider>
+  );
 }
 
-export default App
+export default App;
