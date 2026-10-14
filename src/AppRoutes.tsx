@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, type RouteProps } from 'react-router-dom';
+import { lazy, Suspense, type ComponentType } from 'react';
 import Sidebar from './components/dashboard/Sidebar';
 import HomePage from './pages/HomePage';
 import ContactsPage from './pages/ContactsPage';
@@ -8,6 +9,11 @@ import WorkflowsPage from './pages/WorkflowsPage';
 import ChannelsPage from './pages/ChannelsPage';
 import IntegrationsPage from './pages/IntegrationsPage';
 import PlaceholderPage from './pages/PlaceholderPage';
+
+// Dev-only page — only imported when DEV, never bundled into production
+const DevEnginePage: ComponentType | null = import.meta.env.DEV
+  ? lazy(() => import('./pages/DevEnginePage'))
+  : null;
 
 export default function AppRoutes() {
   return (
@@ -26,6 +32,16 @@ export default function AppRoutes() {
           <Route path="/workflows" element={<WorkflowsPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/channels" element={<ChannelsPage />} />
+          {import.meta.env.DEV && DevEnginePage && (
+            <Route
+              path="/dev/engine"
+              element={
+                <Suspense fallback={null}>
+                  <DevEnginePage />
+                </Suspense>
+              }
+            />
+          )}
         </Routes>
       </main>
     </div>

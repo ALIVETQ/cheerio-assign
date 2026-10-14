@@ -27,7 +27,7 @@ export interface ChatMessage {
   offer?: WorkflowOffer;
   /** offer was dismissed with "Not now" */
   dismissed?: boolean;
-  /** progress card payload (wired in Phase 3) */
+  /** progress card payload */
   progress?: { stepIndex: number; totalSteps: number; workflowTitle: string };
   /** handoff confirmation (wired in Phase 5) */
   handoff?: boolean;
@@ -46,6 +46,12 @@ interface RioContextValue {
   acceptOffer: (messageId: string) => void;
   /** Lets Phase 3+ push arbitrary Rio messages (progress, handoff, etc.) */
   pushRioMessage: (msg: Omit<ChatMessage, 'id'>) => void;
+}
+
+interface RioProviderProps {
+  children: ReactNode;
+  /** Called when the user clicks Start on an offer card. Phase 3 wires this to the engine. */
+  onStartWorkflow?: (offer: WorkflowOffer) => void;
 }
 
 // ─── Context ─────────────────────────────────────────────────────────────────
@@ -78,10 +84,9 @@ const GREETING: ChatMessage = {
   text: "Hi, I'm Rio 👋 I'm here to guide you through Cheerio AI. What are you trying to do today? Describe your problem in your own words.",
 };
 
-export function RioProvider({ children }: { children: ReactNode }) {
+export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
-  // Track whether we're waiting on a reply (Phase 4 will use this)
   const pendingRef = useRef(false);
 
   const openPanel = useCallback(() => setIsOpen(true), []);
@@ -94,12 +99,8 @@ export function RioProvider({ children }: { children: ReactNode }) {
 
   const sendMessage = useCallback((text: string) => {
     if (pendingRef.current) return;
-
-    // Add user bubble
     const userMsg: ChatMessage = { id: nextId(), role: 'user', text };
     setMessages((prev) => [...prev, userMsg]);
-
-    // Scripted reply: always produce an offer card (replaced in Phase 4)
     pendingRef.current = true;
     setTimeout(() => {
       const offer = buildScriptedOffer();
@@ -121,15 +122,21 @@ export function RioProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const acceptOffer = useCallback((_messageId: string) => {
-    // Wired to Workflow Engine in Phase 3.
-    // For now just marks it accepted so the Start button doesn't stay active.
+  const acceptOffer = useCallback((messageId: string) => {
+    // Mark as dismissed so the card collapses
     setMessages((prev) =>
-      prev.map((m) =>
-        m.id === _messageId ? { ...m, dismissed: true } : m
-      )
+      prev.map((m) => (m.id === messageId ? { ...m, dismissed: true } : m))
     );
-  }, []);
+    // Find the offer and delegate to the engine
+    setMessages((prev) => {
+      const msg = prev.find((m) => m.id === messageId);
+      if (msg?.offer && onStartWorkflow) {
+        // Call outside the setter to avoid setState-in-setState
+        setTimeout(() => onStartWorkflow(msg.offer!), 0);
+      }
+      return prev;
+    });
+  }, [onStartWorkflow]);
 
   return (
     <RioContext

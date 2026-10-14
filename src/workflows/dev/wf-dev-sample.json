@@ -1,0 +1,40 @@
+{
+  "id": "wf-dev-sample",
+  "title": "Dev Sample: New Campaign (3 steps)",
+  "description": "A tiny dev-only workflow for testing the engine. Not part of the real library.",
+  "keywords": ["dev", "sample", "test"],
+  "examplePhrases": [],
+  "level": 2,
+  "estimatedMinutes": 1,
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "dev-s1",
+      "title": "Open New Campaign",
+      "instruction": "Click the 'New campaign' button to open the modal.",
+      "target": "[data-tour='new-campaign-btn']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='new-campaign-btn']" },
+      "mode": "guide"
+    },
+    {
+      "id": "dev-s2",
+      "title": "Name your campaign",
+      "instruction": "I've suggested a name below. Check it and press Enter or move on.",
+      "target": "[data-tour='campaign-name']",
+      "route": "/",
+      "completeOn": { "type": "inputFilled", "target": "[data-tour='campaign-name']" },
+      "mode": "assist",
+      "prefill": { "target": "[data-tour='campaign-name']", "value": "My First WhatsApp Campaign" }
+    },
+    {
+      "id": "dev-s3",
+      "title": "Confirm and continue",
+      "instruction": "Looks good! Click Next when you are ready.",
+      "target": "[data-tour='campaign-next-btn']",
+      "route": "/",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    }
+  ]
+}

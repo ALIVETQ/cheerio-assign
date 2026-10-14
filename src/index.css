@@ -999,3 +999,91 @@ body {
   position: relative;
   top: -1px;
 }
+
+/* ===================================================================
+   WORKFLOW ENGINE — Phase 3A
+   =================================================================== */
+
+/* ── Spotlight ring (pulsing) ── */
+.spotlight-ring {
+  border: 2px solid #7C3AED;
+  box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5);
+  animation: spotlight-pulse 1.5s ease-out infinite;
+}
+@keyframes spotlight-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5); }
+  70%  { box-shadow: 0 0 0 10px rgba(124, 58, 237, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+}
+
+/* ── Step Tooltip ── */
+.step-tooltip {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.125rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  border: 1px solid var(--border-color);
+}
+.step-tooltip-progress {
+  font-size: 0.75rem;
+  color: var(--purple-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.375rem;
+}
+.step-tooltip-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+.step-tooltip-instruction {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+.step-tooltip-instruction--warn {
+  color: #B45309;
+  background: #FEF3C7;
+  padding: 0.5rem 0.625rem;
+  border-radius: 6px;
+}
+.step-tooltip-prefill {
+  font-size: 0.8125rem;
+  color: var(--purple-primary);
+  background: var(--purple-light);
+  padding: 0.375rem 0.625rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+.step-tooltip-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.step-tooltip-btn {
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+.step-tooltip-btn--primary {
+  background: var(--purple-gradient);
+  color: white;
+}
+.step-tooltip-btn--primary:hover { opacity: 0.88; }
+.step-tooltip-btn--ghost {
+  background: #F3F4F6;
+  color: var(--text-primary);
+}
+.step-tooltip-btn--ghost:hover { background: #E5E7EB; }
+.step-tooltip-btn--stuck {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.step-tooltip-btn--stuck:hover { background: #FDE68A; }
