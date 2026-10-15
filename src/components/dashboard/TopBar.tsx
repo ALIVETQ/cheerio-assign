@@ -17,7 +17,12 @@ export default function TopBar({ title }: TopBarProps) {
 
       <div className="topbar-right">
         <span className="prototype-badge">Prototype</span>
-        <button className="support-view-btn" data-tour="support-view-btn">
+        <button
+          className="support-view-btn"
+          data-tour="support-view-btn"
+          data-testid="support-view-btn"
+          onClick={() => window.open('/support', '_blank', 'noopener,noreferrer')}
+        >
           Support View
         </button>
       </div>

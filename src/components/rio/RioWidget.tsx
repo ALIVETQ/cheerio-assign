@@ -9,7 +9,8 @@ export default function RioWidget() {
   const {
     isOpen, isCompact, workflowStepLabel, messages,
     togglePanel, closePanel, collapseToCompact, expandFromCompact,
-    sendMessage, dismissOffer, acceptOffer, isTyping, focusNonce, requestInputFocus,
+    sendMessage, dismissOffer, acceptOffer, isTyping, isHandoffSharing,
+    focusNonce, requestInputFocus, requestHandoff,
   } = useRio();
 
   const [inputValue, setInputValue] = useState('');
@@ -53,9 +54,8 @@ export default function RioWidget() {
   }, [focusNonce]);
 
   const handleHumanHandoff = useCallback(() => {
-    // Stubbed here; wired in Phase 5
-    alert('Handoff to human — coming in Phase 5!');
-  }, []);
+    requestHandoff('footer');
+  }, [requestHandoff]);
 
   const stepLabel = workflowStepLabel;
 
@@ -136,9 +136,11 @@ export default function RioWidget() {
               <MessageList
                 messages={messages}
                 isTyping={isTyping}
+                isHandoffSharing={isHandoffSharing}
                 onStartOffer={acceptOffer}
                 onDismissOffer={dismissOffer}
                 onRephrase={requestInputFocus}
+                onNoMatchHuman={() => requestHandoff('no_match')}
               />
             </div>
 

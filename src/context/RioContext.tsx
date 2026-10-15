@@ -13,8 +13,12 @@ import { fallbackMatch } from '../lib/fallbackMatcher';
 import {
   routeMessage,
   classifyClientRouteError,
+  summarizeHandoff,
   type RouteResponse,
 } from '../lib/api';
+import { buildTemplateSummary, resolveHandoffReason, type TicketReason } from '../lib/handoffSummary';
+import { createTicket } from '../lib/tickets';
+import type { HandoffWorkflowSnap } from '../lib/handoffSummary';
 
 export const THROTTLE_INTERVAL_MS = 2000;
 export const THROTTLE_SESSION_MAX = 20;
@@ -49,6 +53,7 @@ interface RioContextValue {
   workflowStepLabel: string | null;
   messages: ChatMessage[];
   isTyping: boolean;
+  isHandoffSharing: boolean;
   focusNonce: number;
   openPanel: () => void;
   closePanel: () => void;
@@ -59,9 +64,15 @@ interface RioContextValue {
   dismissOffer: (messageId: string) => void;
   acceptOffer: (messageId: string) => void;
   requestInputFocus: () => void;
+  requestHandoff: (trigger: 'footer' | 'no_match') => void;
   pushRioMessage: (msg: Omit<ChatMessage, 'id'>) => void;
   upsertProgressCard: (progress: NonNullable<ChatMessage['progress']>) => void;
   setWorkflowStepLabel: (label: string | null) => void;
+}
+
+export interface EngineHandoffBridge {
+  pauseIfRunning: () => void;
+  snapshot: () => HandoffWorkflowSnap | null;
 }
 
 interface RioProviderProps {
@@ -70,6 +81,7 @@ interface RioProviderProps {
     offer: WorkflowOffer,
     onPrereqFailed: (msg: { text?: string; offer?: WorkflowOffer }) => void
   ) => void;
+  engineHandoff?: EngineHandoffBridge;
 }
 
 const RioContext = createContext<RioContextValue | null>(null);
@@ -125,16 +137,21 @@ function buildReply(result: RouteResponse): Omit<ChatMessage, 'id'> {
   };
 }
 
-export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
+export function RioProvider({ children, onStartWorkflow, engineHandoff }: RioProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const [workflowStepLabel, setWorkflowStepLabel] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [isTyping, setIsTyping] = useState(false);
+  const [isHandoffSharing, setIsHandoffSharing] = useState(false);
   const [focusNonce, setFocusNonce] = useState(0);
   const pendingRef = useRef(false);
   const lastSentRef = useRef(0);
   const sessionCountRef = useRef(0);
+  const lastNoMatchSourceRef = useRef<'gemini' | 'fallback' | null>(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const handoffPendingRef = useRef(false);
 
   const openPanel = useCallback(() => { setIsOpen(true); setIsCompact(false); }, []);
   const closePanel = useCallback(() => setIsOpen(false), []);
@@ -203,6 +220,7 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
       }
 
       const reply = buildReply(result);
+      if (reply.noMatch) lastNoMatchSourceRef.current = result.source;
       setMessages((prev) => [...prev, { ...reply, id: nextId() }]);
       setIsTyping(false);
       pendingRef.current = false;
@@ -214,6 +232,46 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
       prev.map((m) => (m.id === messageId ? { ...m, dismissed: true } : m))
     );
   }, []);
+
+  const requestHandoff = useCallback((trigger: 'footer' | 'no_match') => {
+    if (handoffPendingRef.current) return;
+    handoffPendingRef.current = true;
+    const reason: TicketReason = resolveHandoffReason(trigger, lastNoMatchSourceRef.current);
+    engineHandoff?.pauseIfRunning();
+    openPanel();
+    setIsCompact(false);
+    setIsHandoffSharing(true);
+
+    const transcript = messagesRef.current.map((m) => ({
+      role: m.role,
+      text: m.text ?? m.offer?.title,
+      ts: new Date().toISOString(),
+    }));
+    const workflow = engineHandoff?.snapshot() ?? null;
+
+    void (async () => {
+      let summary = buildTemplateSummary({ transcript, workflow, reason });
+      try {
+        summary = await summarizeHandoff({ transcript, workflow, customer: { name: 'Demo User', business: 'Demo Store', plan: 'Growth' }, reason });
+      } catch {
+        summary = buildTemplateSummary({ transcript, workflow, reason });
+      }
+      createTicket({ reason, summary, workflow, transcript });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId(),
+          role: 'rio',
+          handoff: true,
+          text: "I've shared everything with our team. A support agent will pick this up from here.",
+          source: summary.source,
+          fallbackCause: summary.source === 'fallback' ? 'error' : null,
+        },
+      ]);
+      setIsHandoffSharing(false);
+      handoffPendingRef.current = false;
+    })();
+  }, [engineHandoff, openPanel]);
 
   const acceptOffer = useCallback((messageId: string) => {
     setMessages((prev) =>
@@ -244,6 +302,7 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
         workflowStepLabel,
         messages,
         isTyping,
+        isHandoffSharing,
         focusNonce,
         openPanel,
         closePanel,
@@ -254,6 +313,7 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
         dismissOffer,
         acceptOffer,
         requestInputFocus,
+        requestHandoff,
         pushRioMessage,
         upsertProgressCard,
         setWorkflowStepLabel,

@@ -10,6 +10,8 @@ interface MessageListProps {
   onStartOffer: (messageId: string) => void;
   onDismissOffer: (messageId: string) => void;
   onRephrase?: () => void;
+  onNoMatchHuman?: () => void;
+  isHandoffSharing?: boolean;
 }
 
 export default function MessageList({
@@ -18,6 +20,8 @@ export default function MessageList({
   onStartOffer,
   onDismissOffer,
   onRephrase,
+  onNoMatchHuman,
+  isHandoffSharing,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +53,15 @@ export default function MessageList({
                 onStart={() => onStartOffer(msg.id)}
                 onNotNow={() => onDismissOffer(msg.id)}
               />
+            </div>
+          );
+        }
+
+        if (msg.handoff) {
+          return (
+            <div key={msg.id} className="rio-bubble rio-bubble--rio" data-testid="handoff-confirmation">
+              <span>{msg.text ?? "I've shared everything with our team. A support agent will pick this up from here."}</span>
+              {msg.source === 'fallback' && <FallbackBadge cause={msg.fallbackCause} />}
             </div>
           );
         }
@@ -85,14 +98,24 @@ export default function MessageList({
                 >
                   Rephrase
                 </button>
+                <button
+                  type="button"
+                  className="rio-rephrase-btn"
+                  data-testid="rio-no-match-human-btn"
+                  onClick={onNoMatchHuman}
+                >
+                  Talk to a human
+                </button>
               </div>
             )}
           </div>
         );
       })}
-      {isTyping && (
-        <div className="rio-bubble rio-bubble--rio" data-testid="rio-typing">
-          <span className="rio-typing-dots">Rio is typing…</span>
+      {(isTyping || isHandoffSharing) && (
+        <div className="rio-bubble rio-bubble--rio" data-testid={isHandoffSharing ? 'rio-handoff-sharing' : 'rio-typing'}>
+          <span className="rio-typing-dots">
+            {isHandoffSharing ? 'Sharing with our team...' : 'Rio is typing…'}
+          </span>
         </div>
       )}
       <div ref={bottomRef} />

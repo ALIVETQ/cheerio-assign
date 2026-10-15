@@ -1,22 +1,13 @@
 /**
  * Gemini Flash router — called server-side only.
  * NEVER import this from browser/frontend code.
- *
- * Calls Gemini Flash with structured JSON output to pick the best
- * workflow ID from the allow-list, or null if nothing fits.
  */
 
-import { GoogleGenAI } from '@google/genai';
 import { WORKFLOW_LIBRARY, isAllowedWorkflowId } from './workflows';
+import { callGeminiGenerate } from './geminiClient';
+import type { GeminiErrorCause } from './geminiClient';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type GeminiErrorCause =
-  | 'timeout'
-  | 'rate_limit'
-  | 'invalid_json'
-  | 'unknown_id'
-  | 'error';
+export type { GeminiErrorCause };
 
 export interface GeminiRouteResult {
   workflowId: string | null;
@@ -30,8 +21,6 @@ export interface GeminiRouteError {
   cause: GeminiErrorCause;
 }
 
-// ─── Response schema ──────────────────────────────────────────────────────────
-
 const RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
@@ -41,8 +30,6 @@ const RESPONSE_SCHEMA = {
   },
   required: ['workflowId', 'confidence', 'reason'],
 };
-
-// ─── System prompt ────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(): string {
   const workflowList = WORKFLOW_LIBRARY.map(
@@ -68,109 +55,46 @@ ${workflowList}
 Return ONLY JSON matching the schema: { workflowId: string|null, confidence: number, reason: string }`;
 }
 
-// ─── Timeout wrapper ──────────────────────────────────────────────────────────
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT')), ms)
-    ),
-  ]);
-}
-
-// ─── Main function ────────────────────────────────────────────────────────────
-
 export async function callGeminiRouter(
   message: string
 ): Promise<GeminiRouteResult | { error: GeminiRouteError }> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return { error: { cause: 'error' } };
-  }
-
-  const modelName = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
-
-  const ai = new GoogleGenAI({ apiKey });
-
-  // Wrap user message in delimiters — it is DATA, not instructions
   const userContent = `<user_message>\n${message}\n</user_message>`;
 
-  async function attempt(): Promise<
-    GeminiRouteResult | { error: GeminiRouteError; retry?: boolean }
-  > {
-    let response;
-    try {
-      response = await withTimeout(
-        ai.models.generateContent({
-          model: modelName,
-          contents: userContent,
-          config: {
-            systemInstruction: buildSystemPrompt(),
-            responseMimeType: 'application/json',
-            responseSchema: RESPONSE_SCHEMA,
-          },
-        }),
-        6000
-      );
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg === 'TIMEOUT') return { error: { cause: 'timeout' } };
-      // HTTP status errors from the SDK
-      const statusMatch = msg.match(/(\d{3})/);
-      const status = statusMatch ? parseInt(statusMatch[1], 10) : 0;
-      if (status === 429) return { error: { cause: 'rate_limit' } };
-      if (status >= 500) return { error: { cause: 'error' }, retry: true };
-      return { error: { cause: 'error' } };
-    }
+  const gen = await callGeminiGenerate({
+    contents: userContent,
+    systemInstruction: buildSystemPrompt(),
+    responseSchema: RESPONSE_SCHEMA,
+  });
 
-    // Extract text
-    const text = response.text;
-    if (!text) return { error: { cause: 'invalid_json' } };
+  if ('error' in gen) return { error: { cause: gen.error.cause } };
 
-    // Parse JSON
-    let parsed: { workflowId: unknown; confidence: unknown; reason: unknown };
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      return { error: { cause: 'invalid_json' } };
-    }
-
-    // Validate shape
-    if (
-      typeof parsed.confidence !== 'number' ||
-      typeof parsed.reason !== 'string'
-    ) {
-      return { error: { cause: 'invalid_json' } };
-    }
-
-    const workflowId = parsed.workflowId === null || parsed.workflowId === 'null'
-      ? null
-      : typeof parsed.workflowId === 'string' ? parsed.workflowId : null;
-
-    // Allow-list check
-    if (workflowId !== null && !isAllowedWorkflowId(workflowId)) {
-      return { error: { cause: 'unknown_id' } };
-    }
-
-    return {
-      workflowId,
-      confidence: parsed.confidence as number,
-      reason: parsed.reason as string,
-      source: 'gemini',
-      fallbackCause: null,
-    };
+  let parsed: { workflowId: unknown; confidence: unknown; reason: unknown };
+  try {
+    parsed = JSON.parse(gen.text);
+  } catch {
+    return { error: { cause: 'invalid_json' } };
   }
 
-  const first = await attempt();
-  if (!('error' in first)) return first;
-
-  // One retry on 5xx server errors only; none on 429 / timeout / parse failures
-  if (first.retry) {
-    const second = await attempt();
-    if ('error' in second) return { error: second.error };
-    return second;
+  if (
+    typeof parsed.confidence !== 'number' ||
+    typeof parsed.reason !== 'string'
+  ) {
+    return { error: { cause: 'invalid_json' } };
   }
 
-  return first;
+  const workflowId = parsed.workflowId === null || parsed.workflowId === 'null'
+    ? null
+    : typeof parsed.workflowId === 'string' ? parsed.workflowId : null;
+
+  if (workflowId !== null && !isAllowedWorkflowId(workflowId)) {
+    return { error: { cause: 'unknown_id' } };
+  }
+
+  return {
+    workflowId,
+    confidence: parsed.confidence,
+    reason: parsed.reason,
+    source: 'gemini',
+    fallbackCause: null,
+  };
 }

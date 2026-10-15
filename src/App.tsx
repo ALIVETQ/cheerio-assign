@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AccountProvider, useAccount } from './context/AccountContext';
 import { RioProvider, useRio } from './context/RioContext';
 import { EngineProvider, useEngine } from './context/EngineContext';
@@ -9,6 +9,8 @@ import { getWorkflow } from './workflows/loader';
 import type { WorkflowOffer } from './context/RioContext';
 import { useEffect, useCallback, useRef } from 'react';
 import { checkPreconditions } from './workflows/preconditionHelpers';
+import SupportPage from './pages/SupportPage';
+import type { EngineHandoffBridge } from './context/RioContext';
 
 // ─── Prereq offer builder ─────────────────────────────────────────────────────
 
@@ -121,8 +123,23 @@ function AppShell() {
 // ─── InnerApp ─────────────────────────────────────────────────────────────────
 
 function InnerApp() {
-  const { actions } = useEngine();
+  const { actions, state, workflow } = useEngine();
   const { account } = useAccount();
+
+  const engineHandoff: EngineHandoffBridge = {
+    pauseIfRunning: () => {
+      if (state.status === 'running') actions.stuck();
+    },
+    snapshot: () => {
+      if (!workflow || (state.status !== 'running' && state.status !== 'stuck')) return null;
+      return {
+        id: workflow.id,
+        title: workflow.title,
+        stepIndex: state.stepIndex,
+        totalSteps: workflow.steps.length,
+      };
+    },
+  };
 
   const handleStartWorkflow = useCallback((
     offer: WorkflowOffer,
@@ -148,7 +165,7 @@ function InnerApp() {
   }, [actions, account]);
 
   return (
-    <RioProvider onStartWorkflow={handleStartWorkflow}>
+    <RioProvider onStartWorkflow={handleStartWorkflow} engineHandoff={engineHandoff}>
       <AppShell />
     </RioProvider>
   );
@@ -160,9 +177,17 @@ function App() {
   return (
     <AccountProvider>
       <BrowserRouter>
-        <EngineProvider>
-          <InnerApp />
-        </EngineProvider>
+        <Routes>
+          <Route path="/support" element={<SupportPage />} />
+          <Route
+            path="/*"
+            element={(
+              <EngineProvider>
+                <InnerApp />
+              </EngineProvider>
+            )}
+          />
+        </Routes>
       </BrowserRouter>
     </AccountProvider>
   );

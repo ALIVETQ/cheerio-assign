@@ -53,3 +53,28 @@ export function classifyClientRouteError(err: unknown): 'timeout' | 'rate_limit'
   if (err instanceof Error && err.name === 'AbortError') return 'timeout';
   return 'error';
 }
+
+export interface SummarizeResponse {
+  problem: string;
+  stepsTried: string[];
+  blocker: string | null;
+  suggestedNextAction: string;
+  source: 'gemini' | 'fallback';
+}
+
+export async function summarizeHandoff(body: unknown): Promise<SummarizeResponse> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), CLIENT_ROUTE_TIMEOUT_MS);
+  try {
+    const res = await fetch('/api/summarize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new RouteRequestError(`HTTP ${res.status}`, res.status);
+    return (await res.json()) as SummarizeResponse;
+  } finally {
+    clearTimeout(timer);
+  }
+}
