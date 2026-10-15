@@ -18,6 +18,19 @@ async function openRioAndSend(page: import('@playwright/test').Page, message: st
 
 // ─── Test 13: Full hero flow ──────────────────────────────────────────────────
 test('Test 13 – open Rio, send message, see offer, click Start, complete hero flow, see success', async ({ page }) => {
+  await page.route('**/api/route', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        workflowId: 'wf-first-campaign',
+        confidence: 0.94,
+        reason: 'You want to set up your first WhatsApp campaign.',
+        source: 'gemini',
+        fallbackCause: null,
+      }),
+    });
+  });
   await page.goto('/');
 
   // Open Rio and send a message
@@ -95,6 +108,19 @@ test('Test 13 – open Rio, send message, see offer, click Start, complete hero 
 
 // ─── Test 14: Not now → no spotlight ever ────────────────────────────────────
 test('Test 14 – Not now: no spotlight ever appears', async ({ page }) => {
+  await page.route('**/api/route', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        workflowId: 'wf-first-campaign',
+        confidence: 0.9,
+        reason: 'campaign',
+        source: 'gemini',
+        fallbackCause: null,
+      }),
+    });
+  });
   await page.goto('/');
 
   await openRioAndSend(page, 'I want to create a campaign');

@@ -44,7 +44,7 @@ const REQUIRED_WHATSAPP_CREDITS = 2;
 function AppShell() {
   const { state, workflow, actions } = useEngine();
   const { account } = useAccount();
-  const { pushRioMessage, collapseToCompact, openPanel, setWorkflowStepLabel } = useRio();
+  const { pushRioMessage, upsertProgressCard, collapseToCompact, openPanel, setWorkflowStepLabel } = useRio();
 
   // Track whether we've already blocked credits for the current run
   const creditBlockedRef = useRef(false);
@@ -100,13 +100,10 @@ function AppShell() {
   useEffect(() => {
     if (state.status === 'running' && workflow) {
       setWorkflowStepLabel(`Step ${state.stepIndex + 1} of ${workflow.steps.length}`);
-      pushRioMessage({
-        role: 'rio',
-        progress: {
-          stepIndex: state.stepIndex,
-          totalSteps: workflow.steps.length,
-          workflowTitle: workflow.title,
-        },
+      upsertProgressCard({
+        stepIndex: state.stepIndex,
+        totalSteps: workflow.steps.length,
+        workflowTitle: workflow.title,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

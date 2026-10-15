@@ -6,8 +6,18 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
+import '../workflows/index';
+import { getWorkflow } from '../workflows/loader';
+import { WORKFLOW_LIBRARY } from '../../api/_lib/workflows';
+import { fallbackMatch } from '../lib/fallbackMatcher';
+import {
+  routeMessage,
+  classifyClientRouteError,
+  type RouteResponse,
+} from '../lib/api';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+export const THROTTLE_INTERVAL_MS = 2000;
+export const THROTTLE_SESSION_MAX = 20;
 
 export type MessageRole = 'user' | 'rio';
 
@@ -25,12 +35,10 @@ export interface ChatMessage {
   role: MessageRole;
   text?: string;
   offer?: WorkflowOffer;
-  /** offer was dismissed with "Not now" */
   dismissed?: boolean;
-  /** progress card payload */
   progress?: { stepIndex: number; totalSteps: number; workflowTitle: string };
-  /** handoff confirmation (wired in Phase 5) */
   handoff?: boolean;
+  noMatch?: boolean;
   source?: 'gemini' | 'fallback';
   fallbackCause?: string | null;
 }
@@ -38,9 +46,10 @@ export interface ChatMessage {
 interface RioContextValue {
   isOpen: boolean;
   isCompact: boolean;
-  /** Step label shown in the compact pill, e.g. "Step 3 of 10" */
   workflowStepLabel: string | null;
   messages: ChatMessage[];
+  isTyping: boolean;
+  focusNonce: number;
   openPanel: () => void;
   closePanel: () => void;
   togglePanel: () => void;
@@ -49,37 +58,21 @@ interface RioContextValue {
   sendMessage: (text: string) => void;
   dismissOffer: (messageId: string) => void;
   acceptOffer: (messageId: string) => void;
+  requestInputFocus: () => void;
   pushRioMessage: (msg: Omit<ChatMessage, 'id'>) => void;
+  upsertProgressCard: (progress: NonNullable<ChatMessage['progress']>) => void;
   setWorkflowStepLabel: (label: string | null) => void;
 }
 
 interface RioProviderProps {
   children: ReactNode;
-  /** Called when the user clicks Start on an offer card. Phase 3 wires this to the engine. */
   onStartWorkflow?: (
     offer: WorkflowOffer,
     onPrereqFailed: (msg: { text?: string; offer?: WorkflowOffer }) => void
   ) => void;
 }
 
-// ─── Context ─────────────────────────────────────────────────────────────────
-
 const RioContext = createContext<RioContextValue | null>(null);
-
-// ─── Scripted reply (replaced by real router in Phase 4) ─────────────────────
-
-function buildScriptedOffer(): WorkflowOffer {
-  return {
-    workflowId: 'wf-first-campaign',
-    title: 'Set up your first WhatsApp campaign',
-    reason: 'This looks like you want to send a WhatsApp broadcast to your contacts.',
-    estimatedMinutes: 4,
-    source: 'gemini',
-    fallbackCause: null,
-  };
-}
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 
 let _idCounter = 0;
 function nextId() {
@@ -92,41 +85,129 @@ const GREETING: ChatMessage = {
   text: "Hi, I'm Rio 👋 I'm here to guide you through Cheerio AI. What are you trying to do today? Describe your problem in your own words.",
 };
 
+function metaFor(workflowId: string) {
+  const wf = getWorkflow(workflowId);
+  if (wf) return { title: wf.title, estimatedMinutes: wf.estimatedMinutes };
+  const lib = WORKFLOW_LIBRARY.find((w) => w.id === workflowId);
+  return {
+    title: lib?.title ?? workflowId,
+    estimatedMinutes: lib?.estimatedMinutes ?? 3,
+  };
+}
+
+function buildReply(result: RouteResponse): Omit<ChatMessage, 'id'> {
+  const showOffer =
+    Boolean(result.workflowId) && result.confidence >= 0.6 && result.workflowId !== null;
+
+  if (showOffer && result.workflowId) {
+    const meta = metaFor(result.workflowId);
+    return {
+      role: 'rio',
+      offer: {
+        workflowId: result.workflowId,
+        title: meta.title,
+        reason: result.reason,
+        estimatedMinutes: meta.estimatedMinutes,
+        source: result.source,
+        fallbackCause: result.fallbackCause,
+      },
+      source: result.source,
+      fallbackCause: result.fallbackCause,
+    };
+  }
+
+  return {
+    role: 'rio',
+    text: "I couldn't find a matching guide for that. Try rephrasing your question, or talk to a human.",
+    noMatch: true,
+    source: result.source,
+    fallbackCause: result.fallbackCause,
+  };
+}
+
 export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const [workflowStepLabel, setWorkflowStepLabel] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [focusNonce, setFocusNonce] = useState(0);
   const pendingRef = useRef(false);
+  const lastSentRef = useRef(0);
+  const sessionCountRef = useRef(0);
 
   const openPanel = useCallback(() => { setIsOpen(true); setIsCompact(false); }, []);
   const closePanel = useCallback(() => setIsOpen(false), []);
   const togglePanel = useCallback(() => setIsOpen((v) => !v), []);
   const collapseToCompact = useCallback(() => { setIsCompact(true); setIsOpen(false); }, []);
   const expandFromCompact = useCallback(() => { setIsCompact(false); setIsOpen(true); }, []);
+  const requestInputFocus = useCallback(() => setFocusNonce((n) => n + 1), []);
 
   const pushRioMessage = useCallback((msg: Omit<ChatMessage, 'id'>) => {
     setMessages((prev) => [...prev, { ...msg, id: nextId() }]);
   }, []);
 
-  const sendMessage = useCallback((text: string) => {
-    if (pendingRef.current) return;
-    const userMsg: ChatMessage = { id: nextId(), role: 'user', text };
-    setMessages((prev) => [...prev, userMsg]);
-    pendingRef.current = true;
-    setTimeout(() => {
-      const offer = buildScriptedOffer();
-      const rioMsg: ChatMessage = {
-        id: nextId(),
-        role: 'rio',
-        offer,
-        source: offer.source,
-        fallbackCause: offer.fallbackCause,
-      };
-      setMessages((prev) => [...prev, rioMsg]);
-      pendingRef.current = false;
-    }, 600);
+  const upsertProgressCard = useCallback((progress: NonNullable<ChatMessage['progress']>) => {
+    setMessages((prev) => {
+      const idx = prev.findIndex((m) => m.progress);
+      if (idx === -1) return [...prev, { id: nextId(), role: 'rio', progress }];
+      const next = [...prev];
+      next[idx] = { ...next[idx], progress };
+      return next;
+    });
   }, []);
+
+  const sendMessage = useCallback((text: string) => {
+    const now = Date.now();
+    if (sessionCountRef.current >= THROTTLE_SESSION_MAX) {
+      pushRioMessage({
+        role: 'rio',
+        text: "You've reached the message limit for this session. Please try again later or talk to a human.",
+      });
+      return;
+    }
+    if (now - lastSentRef.current < THROTTLE_INTERVAL_MS && lastSentRef.current !== 0) {
+      pushRioMessage({
+        role: 'rio',
+        text: 'Please wait a moment before sending another message.',
+      });
+      return;
+    }
+    if (pendingRef.current) return;
+
+    lastSentRef.current = now;
+    sessionCountRef.current += 1;
+
+    setMessages((prev) => [...prev, { id: nextId(), role: 'user', text }]);
+    pendingRef.current = true;
+    setIsTyping(true);
+
+    void (async () => {
+      let result: RouteResponse;
+      try {
+        result = await routeMessage(text);
+      } catch (err) {
+        const cause = classifyClientRouteError(err);
+        const fb = fallbackMatch(text);
+        result = {
+          workflowId: fb?.workflowId ?? null,
+          confidence: fb?.confidence ?? 0,
+          reason: fb?.reason ?? "I couldn't find a workflow that matches your question.",
+          source: 'fallback',
+          fallbackCause: cause,
+        };
+      }
+
+      if (result.source === 'fallback') {
+        console.warn('[Rio fallback]', result.fallbackCause);
+      }
+
+      const reply = buildReply(result);
+      setMessages((prev) => [...prev, { ...reply, id: nextId() }]);
+      setIsTyping(false);
+      pendingRef.current = false;
+    })();
+  }, [pushRioMessage]);
 
   const dismissOffer = useCallback((messageId: string) => {
     setMessages((prev) =>
@@ -135,11 +216,9 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
   }, []);
 
   const acceptOffer = useCallback((messageId: string) => {
-    // Mark as dismissed so the card collapses
     setMessages((prev) =>
       prev.map((m) => (m.id === messageId ? { ...m, dismissed: true } : m))
     );
-    // Find the offer and delegate to the engine
     setMessages((prev) => {
       const msg = prev.find((m) => m.id === messageId);
       if (msg?.offer && onStartWorkflow) {
@@ -164,6 +243,8 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
         isCompact,
         workflowStepLabel,
         messages,
+        isTyping,
+        focusNonce,
         openPanel,
         closePanel,
         togglePanel,
@@ -172,7 +253,9 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
         sendMessage,
         dismissOffer,
         acceptOffer,
+        requestInputFocus,
         pushRioMessage,
+        upsertProgressCard,
         setWorkflowStepLabel,
       }}
     >

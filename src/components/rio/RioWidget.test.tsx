@@ -17,12 +17,34 @@
 
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { AccountProvider } from '../../context/AccountContext';
 import { RioProvider } from '../../context/RioContext';
 import RioWidget from './RioWidget';
 import FallbackBadge from './FallbackBadge';
+
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        workflowId: 'wf-first-campaign',
+        confidence: 0.9,
+        reason: 'This looks like a campaign setup question.',
+        source: 'gemini',
+        fallbackCause: null,
+      }),
+    }))
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -57,11 +79,11 @@ describe('Test 1 – Panel opens and closes', () => {
     expect(screen.getByTestId('rio-panel')).toBeInTheDocument();
   });
 
-  it('closes when the FAB is clicked again', async () => {
+  it('hides the FAB while the panel is open so it cannot overlap send', async () => {
     const user = renderRio();
     await openPanel(user);
-    await user.click(screen.getByTestId('rio-fab'));
-    await waitFor(() => expect(screen.queryByTestId('rio-panel')).toBeNull());
+    expect(screen.queryByTestId('rio-fab')).toBeNull();
+    expect(screen.getByTestId('rio-send-btn')).toBeInTheDocument();
   });
 
   it('closes via the close button inside the panel', async () => {

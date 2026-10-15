@@ -820,6 +820,23 @@ body {
   border-bottom-left-radius: 4px;
   position: relative;
 }
+.rio-no-match-actions {
+  margin-top: 0.5rem;
+}
+.rio-rephrase-btn {
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: white;
+  cursor: pointer;
+  color: var(--purple-primary);
+  font-weight: 600;
+}
+.rio-typing-dots {
+  font-style: italic;
+  color: var(--text-secondary);
+}
 
 /* ── Footer / input ── */
 .rio-panel-footer {

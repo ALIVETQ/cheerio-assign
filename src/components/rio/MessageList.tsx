@@ -6,17 +6,24 @@ import FallbackBadge from './FallbackBadge';
 
 interface MessageListProps {
   messages: ChatMessage[];
+  isTyping?: boolean;
   onStartOffer: (messageId: string) => void;
   onDismissOffer: (messageId: string) => void;
+  onRephrase?: () => void;
 }
 
-export default function MessageList({ messages, onStartOffer, onDismissOffer }: MessageListProps) {
+export default function MessageList({
+  messages,
+  isTyping,
+  onStartOffer,
+  onDismissOffer,
+  onRephrase,
+}: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  }, [messages.length, isTyping]);
 
   return (
     <div className="rio-message-list" data-testid="message-list" role="log" aria-live="polite">
@@ -29,7 +36,6 @@ export default function MessageList({ messages, onStartOffer, onDismissOffer }: 
           );
         }
 
-        // Rio message — may contain text, offer card, or progress card
         if (msg.offer) {
           return (
             <div key={msg.id} className="rio-bubble rio-bubble--rio">
@@ -59,16 +65,36 @@ export default function MessageList({ messages, onStartOffer, onDismissOffer }: 
           );
         }
 
-        // Plain text bubble (greeting, no-match, handoff confirmation, etc.)
         return (
-          <div key={msg.id} className="rio-bubble rio-bubble--rio" data-testid="rio-bubble">
+          <div
+            key={msg.id}
+            className="rio-bubble rio-bubble--rio"
+            data-testid={msg.noMatch ? 'rio-no-match' : 'rio-bubble'}
+          >
             <span>{msg.text}</span>
             {msg.source === 'fallback' && (
               <FallbackBadge cause={msg.fallbackCause} />
             )}
+            {msg.noMatch && (
+              <div className="rio-no-match-actions">
+                <button
+                  type="button"
+                  className="rio-rephrase-btn"
+                  data-testid="rio-rephrase-btn"
+                  onClick={onRephrase}
+                >
+                  Rephrase
+                </button>
+              </div>
+            )}
           </div>
         );
       })}
+      {isTyping && (
+        <div className="rio-bubble rio-bubble--rio" data-testid="rio-typing">
+          <span className="rio-typing-dots">Rio is typing…</span>
+        </div>
+      )}
       <div ref={bottomRef} />
     </div>
   );

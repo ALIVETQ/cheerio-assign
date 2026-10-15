@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRio } from '../../context/RioContext';
 import MessageList from './MessageList';
@@ -9,7 +9,7 @@ export default function RioWidget() {
   const {
     isOpen, isCompact, workflowStepLabel, messages,
     togglePanel, closePanel, collapseToCompact, expandFromCompact,
-    sendMessage, dismissOffer, acceptOffer,
+    sendMessage, dismissOffer, acceptOffer, isTyping, focusNonce, requestInputFocus,
   } = useRio();
 
   const [inputValue, setInputValue] = useState('');
@@ -48,6 +48,10 @@ export default function RioWidget() {
     }
   }, []);
 
+  useEffect(() => {
+    if (focusNonce > 0) inputRef.current?.focus();
+  }, [focusNonce]);
+
   const handleHumanHandoff = useCallback(() => {
     // Stubbed here; wired in Phase 5
     alert('Handoff to human — coming in Phase 5!');
@@ -69,20 +73,16 @@ export default function RioWidget() {
         </button>
       )}
 
-      {/* ── Floating button (shown when NOT in compact mode) ── */}
-      {!isCompact && (
+      {/* FAB hidden while the panel is open so it cannot cover the send button */}
+      {!isCompact && !isOpen && (
         <button
           className="rio-fab"
           onClick={togglePanel}
-          aria-label={isOpen ? 'Close Rio support' : 'Open Rio support'}
+          aria-label="Open Rio support"
           data-testid="rio-fab"
           data-tour="rio-fab"
         >
-          {isOpen ? (
-            <span className="rio-fab-icon">✕</span>
-          ) : (
-            <span className="rio-fab-icon" aria-hidden>🎧</span>
-          )}
+          <span className="rio-fab-icon" aria-hidden>🎧</span>
         </button>
       )}
 
@@ -135,8 +135,10 @@ export default function RioWidget() {
             <div className="rio-panel-body">
               <MessageList
                 messages={messages}
+                isTyping={isTyping}
                 onStartOffer={acceptOffer}
                 onDismissOffer={dismissOffer}
+                onRephrase={requestInputFocus}
               />
             </div>
 
