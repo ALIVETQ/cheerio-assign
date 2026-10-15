@@ -30,11 +30,12 @@ test('Test 13 – open Rio, send message, see offer, click Start, complete hero 
   // Dashboard has NOT changed yet — no spotlight tooltip
   await expect(page.locator('[data-testid="step-tooltip"]')).not.toBeVisible();
 
-  // Click Start
+  // Click Start — panel auto-collapses to compact pill
   await page.click('[data-testid="offer-start-btn"]');
 
-  // Close the Rio panel to interact with the dashboard
-  await page.click('[data-testid="rio-close-btn"]');
+  // Panel is gone; compact pill appears instead
+  await expect(page.locator('[data-testid="rio-panel"]')).not.toBeVisible({ timeout: 3000 });
+  await expect(page.locator('[data-testid="rio-compact-pill"]')).toBeVisible({ timeout: 3000 });
 
   // Spotlight/tooltip appears
   await expect(page.locator('[data-testid="step-tooltip"]')).toBeVisible({ timeout: 3000 });

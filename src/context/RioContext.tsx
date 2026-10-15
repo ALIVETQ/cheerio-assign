@@ -37,15 +37,20 @@ export interface ChatMessage {
 
 interface RioContextValue {
   isOpen: boolean;
+  isCompact: boolean;
+  /** Step label shown in the compact pill, e.g. "Step 3 of 10" */
+  workflowStepLabel: string | null;
   messages: ChatMessage[];
   openPanel: () => void;
   closePanel: () => void;
   togglePanel: () => void;
+  collapseToCompact: () => void;
+  expandFromCompact: () => void;
   sendMessage: (text: string) => void;
   dismissOffer: (messageId: string) => void;
   acceptOffer: (messageId: string) => void;
-  /** Lets Phase 3+ push arbitrary Rio messages (progress, handoff, etc.) */
   pushRioMessage: (msg: Omit<ChatMessage, 'id'>) => void;
+  setWorkflowStepLabel: (label: string | null) => void;
 }
 
 interface RioProviderProps {
@@ -89,12 +94,16 @@ const GREETING: ChatMessage = {
 
 export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+  const [workflowStepLabel, setWorkflowStepLabel] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const pendingRef = useRef(false);
 
-  const openPanel = useCallback(() => setIsOpen(true), []);
+  const openPanel = useCallback(() => { setIsOpen(true); setIsCompact(false); }, []);
   const closePanel = useCallback(() => setIsOpen(false), []);
   const togglePanel = useCallback(() => setIsOpen((v) => !v), []);
+  const collapseToCompact = useCallback(() => { setIsCompact(true); setIsOpen(false); }, []);
+  const expandFromCompact = useCallback(() => { setIsCompact(false); setIsOpen(true); }, []);
 
   const pushRioMessage = useCallback((msg: Omit<ChatMessage, 'id'>) => {
     setMessages((prev) => [...prev, { ...msg, id: nextId() }]);
@@ -152,14 +161,19 @@ export function RioProvider({ children, onStartWorkflow }: RioProviderProps) {
     <RioContext
       value={{
         isOpen,
+        isCompact,
+        workflowStepLabel,
         messages,
         openPanel,
         closePanel,
         togglePanel,
+        collapseToCompact,
+        expandFromCompact,
         sendMessage,
         dismissOffer,
         acceptOffer,
         pushRioMessage,
+        setWorkflowStepLabel,
       }}
     >
       {children}

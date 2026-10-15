@@ -1115,3 +1115,26 @@ body {
   padding: 1rem;
   margin-bottom: 1rem;
 }
+
+/* ── Compact pill (workflow running) ── */
+.rio-compact-pill {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--purple-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+  z-index: 100;
+  transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.rio-compact-pill:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 20px rgba(124,58,237,0.45);
+}

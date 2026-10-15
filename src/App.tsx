@@ -7,7 +7,7 @@ import RioWidget from './components/rio/RioWidget';
 import SpotlightController from './components/engine/SpotlightController';
 import { getWorkflow } from './workflows/loader';
 import type { WorkflowOffer } from './context/RioContext';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { checkPreconditions } from './workflows/preconditionHelpers';
 
 // ─── Prereq offer builder ─────────────────────────────────────────────────────
@@ -36,16 +36,70 @@ function buildPrereqOffer(failedKey: string): WorkflowOffer | null {
   return null;
 }
 
+// ─── Required credits for a campaign (fixed at 2 in the mock) ────────────────
+const REQUIRED_WHATSAPP_CREDITS = 2;
+
 // ─── AppShell ─────────────────────────────────────────────────────────────────
-// Lives inside EngineProvider + RioProvider. Safe to call both useEngine and useRio.
 
 function AppShell() {
-  const { state, workflow } = useEngine();
-  const { pushRioMessage } = useRio();
+  const { state, workflow, actions } = useEngine();
+  const { account } = useAccount();
+  const { pushRioMessage, collapseToCompact, openPanel, setWorkflowStepLabel } = useRio();
 
-  // Progress bridge: push a progress card into Rio whenever step advances
+  // Track whether we've already blocked credits for the current run
+  const creditBlockedRef = useRef(false);
+
+  // Collapse panel when workflow starts; expand on stuck/complete
+  useEffect(() => {
+    if (state.status === 'running') {
+      creditBlockedRef.current = false;
+      collapseToCompact();
+    } else if (state.status === 'stuck') {
+      openPanel();
+    } else if (state.status === 'completed') {
+      setWorkflowStepLabel(null);
+      if (workflow) {
+        pushRioMessage({
+          role: 'rio',
+          text: `✅ Done! You've completed "${workflow.title}". What would you like to do next?`,
+        });
+      }
+      openPanel();
+    } else if (state.status === 'idle') {
+      setWorkflowStepLabel(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.status]);
+
+  // Credits check: when we reach the channel-selection step (s9) of wf-first-campaign,
+  // check WhatsApp credits. If insufficient, block and open Rio with an explanation.
+  useEffect(() => {
+    if (
+      state.status === 'running' &&
+      workflow?.id === 'wf-first-campaign' &&
+      !creditBlockedRef.current
+    ) {
+      const currentStep = workflow.steps[state.stepIndex];
+      if (currentStep?.id === 's9') {
+        const available = account.credits.whatsapp;
+        if (available < REQUIRED_WHATSAPP_CREDITS) {
+          creditBlockedRef.current = true;
+          actions.stuck();
+          pushRioMessage({
+            role: 'rio',
+            text: `⚠️ You need at least ${REQUIRED_WHATSAPP_CREDITS} WhatsApp credits to send this campaign, but you only have ${available}. Please top up your credits or talk to a human for help.`,
+          });
+          openPanel();
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.stepIndex, state.status]);
+
+  // Progress bridge + step label sync
   useEffect(() => {
     if (state.status === 'running' && workflow) {
+      setWorkflowStepLabel(`Step ${state.stepIndex + 1} of ${workflow.steps.length}`);
       pushRioMessage({
         role: 'rio',
         progress: {
@@ -68,16 +122,11 @@ function AppShell() {
 }
 
 // ─── InnerApp ─────────────────────────────────────────────────────────────────
-// Lives inside EngineProvider and AccountProvider, but OUTSIDE RioProvider.
-// Must NOT call useRio().
 
 function InnerApp() {
   const { actions } = useEngine();
   const { account } = useAccount();
 
-  // onStartWorkflow is called by RioProvider when the user clicks Start.
-  // It may either start the engine or push a prereq message (via onPrereqFailed).
-  // We use a two-callback design so the Rio side effects stay inside RioProvider.
   const handleStartWorkflow = useCallback((
     offer: WorkflowOffer,
     onPrereqFailed: (msg: { text?: string; offer?: WorkflowOffer }) => void

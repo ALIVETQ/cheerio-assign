@@ -6,8 +6,11 @@ import MessageList from './MessageList';
 const MAX_INPUT_LENGTH = 500;
 
 export default function RioWidget() {
-  const { isOpen, messages, togglePanel, closePanel, sendMessage, dismissOffer, acceptOffer } =
-    useRio();
+  const {
+    isOpen, isCompact, workflowStepLabel, messages,
+    togglePanel, closePanel, collapseToCompact, expandFromCompact,
+    sendMessage, dismissOffer, acceptOffer,
+  } = useRio();
 
   const [inputValue, setInputValue] = useState('');
   const [inputError, setInputError] = useState('');
@@ -50,22 +53,38 @@ export default function RioWidget() {
     alert('Handoff to human — coming in Phase 5!');
   }, []);
 
+  const stepLabel = workflowStepLabel;
+
   return (
     <>
-      {/* ── Floating button ── */}
-      <button
-        className="rio-fab"
-        onClick={togglePanel}
-        aria-label={isOpen ? 'Close Rio support' : 'Open Rio support'}
-        data-testid="rio-fab"
-        data-tour="rio-fab"
-      >
-        {isOpen ? (
-          <span className="rio-fab-icon">✕</span>
-        ) : (
-          <span className="rio-fab-icon" aria-hidden>🎧</span>
-        )}
-      </button>
+      {/* ── Compact pill (shown during workflow) ── */}
+      {isCompact && !isOpen && (
+        <button
+          className="rio-compact-pill"
+          onClick={expandFromCompact}
+          aria-label="Expand Rio panel"
+          data-testid="rio-compact-pill"
+        >
+          🎧 Rio{stepLabel ? ` · ${stepLabel}` : ''}
+        </button>
+      )}
+
+      {/* ── Floating button (shown when NOT in compact mode) ── */}
+      {!isCompact && (
+        <button
+          className="rio-fab"
+          onClick={togglePanel}
+          aria-label={isOpen ? 'Close Rio support' : 'Open Rio support'}
+          data-testid="rio-fab"
+          data-tour="rio-fab"
+        >
+          {isOpen ? (
+            <span className="rio-fab-icon">✕</span>
+          ) : (
+            <span className="rio-fab-icon" aria-hidden>🎧</span>
+          )}
+        </button>
+      )}
 
       {/* ── Slide-in panel ── */}
       <AnimatePresence>
@@ -88,14 +107,28 @@ export default function RioWidget() {
                   <span className="rio-panel-proto-badge">Prototype</span>
                 </div>
               </div>
-              <button
-                className="rio-panel-close"
-                onClick={closePanel}
-                aria-label="Close Rio panel"
-                data-testid="rio-close-btn"
-              >
-                ✕
-              </button>
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                {/* Collapse to pill when workflow is running */}
+                {workflowStepLabel && (
+                  <button
+                    className="rio-panel-close"
+                    onClick={collapseToCompact}
+                    aria-label="Collapse Rio panel"
+                    data-testid="rio-collapse-btn"
+                    title="Minimise — workflow continues"
+                  >
+                    ─
+                  </button>
+                )}
+                <button
+                  className="rio-panel-close"
+                  onClick={closePanel}
+                  aria-label="Close Rio panel"
+                  data-testid="rio-close-btn"
+                >
+                  ✕
+                </button>
+              </div>
             </header>
 
             {/* Message list */}
@@ -123,7 +156,7 @@ export default function RioWidget() {
                   value={inputValue}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
-                  maxLength={MAX_INPUT_LENGTH + 50} /* allow typing a bit over so error shows */
+                  maxLength={MAX_INPUT_LENGTH + 50}
                   aria-label="Type your message"
                   data-testid="rio-input"
                 />
