@@ -1,5 +1,5 @@
-import { getWorkflow } from '../workflows/loader';
-import '../workflows/index';
+import { getWorkflow } from '../workflows/loader.js';
+import '../workflows/index.js';
 
 export type TicketReason = 'user_requested' | 'no_match' | 'ai_unavailable';
 
@@ -60,7 +60,7 @@ export function buildTemplateSummary(input: {
 
   if (input.workflow && wf) {
     const idx = input.workflow.stepIndex;
-    stepsTried = wf.steps.slice(0, Math.max(0, idx)).map((s) => s.title);
+    stepsTried = wf.steps.slice(0, Math.max(0, idx)).map((s: { title: string }) => s.title);
     blocker = wf.steps[idx]?.title ?? workflowTitle;
   } else if (workflowTitle) {
     blocker = workflowTitle;

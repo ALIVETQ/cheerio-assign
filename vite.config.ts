@@ -110,9 +110,9 @@ export default defineConfig({
     // Add API middleware in dev only
     ...(process.env.NODE_ENV !== 'production' ? [{
       name: 'api-dev-middleware',
-      configureServer(server) {
+      configureServer(server: any) {
         // Inject Vite server into request for ssrLoadModule access
-        server.middlewares.use((req, _res, next) => {
+        server.middlewares.use((req: any, _res: any, next: any) => {
           (req as any).__viteServer = server
           next()
         })
