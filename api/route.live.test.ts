@@ -11,11 +11,16 @@ import { GoogleGenAI } from '@google/genai';
 function loadEnvLocal(): boolean {
   const envPath = resolve(process.cwd(), '.env.local');
   if (!existsSync(envPath)) return false;
-  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+  for (const line of readFileSync(envPath, 'utf8').split(/\r?\n/)) {
     const match = line.match(/^([^#=]+)=(.*)$/);
     if (!match) continue;
     const key = match[1].trim();
-    const value = match[2].trim();
+    let value = match[2].trim();
+    // Strip surrounding quotes if present
+    if ((value.startsWith('"') && value.endsWith('"')) || 
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
     if (!process.env[key]) process.env[key] = value;
   }
   return true;
@@ -49,27 +54,28 @@ const RUN_LIVE =
   process.env.npm_lifecycle_event === 'test:live';
 
 describe.skipIf(!RUN_LIVE)('LIVE /api/route smoke test', () => {
-  it('prints env diagnostics and one Gemini call result', async () => {
+  it('calls Gemini API and expects 200 with valid response', async () => {
     const key = process.env.GEMINI_API_KEY ?? '';
     const model = process.env.GEMINI_MODEL ?? '';
 
-    const out = (line: string) => process.stdout.write(`${line}\n`);
-    out(`loadedEnvLocal: ${loadedEnvLocal}`);
-    out(`GEMINI_API_KEY defined: ${Boolean(key)}`);
-    out(`GEMINI_MODEL defined: ${Boolean(model)}`);
-    out(`model name: ${model || '(unset)'}`);
-    out(`key starts with AIza: ${key.startsWith('AIza')}`);
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: key });
-      await ai.models.generateContent({
-        model: model || 'gemini-2.0-flash',
-        contents: '<user_message>\nI don\'t know how to set up my first WhatsApp campaign\n</user_message>',
-      });
-    } catch (err: unknown) {
-      const raw = err instanceof Error ? err.message : String(err);
-      out(`HTTP status: ${extractStatus(err)}`);
-      out(`error: ${redact(raw).slice(0, 200)}`);
+    if (!key) {
+      throw new Error('GEMINI_API_KEY is missing from .env.local');
     }
+
+    const ai = new GoogleGenAI({ apiKey: key });
+    const response = await ai.models.generateContent({
+      model: model || 'gemini-2.0-flash',
+      contents: '<user_message>\nReply with the single word: OK\n</user_message>',
+    });
+
+    const text = response.text?.trim();
+    if (!text) {
+      throw new Error('Gemini returned empty response');
+    }
+
+    // If we got here, the call succeeded (no 4xx/5xx thrown)
+    process.stdout.write(`✓ Gemini API call succeeded\n`);
+    process.stdout.write(`✓ Model: ${model || 'gemini-2.0-flash'}\n`);
+    process.stdout.write(`✓ Response: ${text.slice(0, 50)}\n`);
   }, 15000);
 });

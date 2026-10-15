@@ -20,7 +20,7 @@ const REQUIRED_WHATSAPP_CREDITS = 2;
 function AppShell() {
   const { state, workflow, actions } = useEngine();
   const { account } = useAccount();
-  const { pushRioMessage, upsertProgressCard, collapseToCompact, openPanel, setWorkflowStepLabel } = useRio();
+  const { pushRioMessage, upsertProgressCard, collapseToCompact, openPanel, setWorkflowStepLabel, setMessages } = useRio();
 
   // Track whether we've already blocked credits for the current run
   const creditBlockedRef = useRef(false);
@@ -34,6 +34,19 @@ function AppShell() {
       openPanel();
     } else if (state.status === 'completed') {
       setWorkflowStepLabel(null);
+      // Convert active progress card to completed summary
+      setMessages((prev) => {
+        const idx = prev.findIndex((m) => m.progress);
+        if (idx === -1) return prev;
+        const progressMsg = prev[idx];
+        const next = [...prev];
+        next[idx] = {
+          ...progressMsg,
+          progress: undefined,
+          text: `✓ Completed: ${progressMsg.progress?.workflowTitle} (${progressMsg.progress?.totalSteps} steps)`,
+        };
+        return next;
+      });
       if (workflow) {
         pushRioMessage({
           role: 'rio',

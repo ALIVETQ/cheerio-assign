@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+
 interface Cutout {
   top: number;
   left: number;
@@ -19,12 +21,12 @@ interface StepTooltipProps {
   onManualConfirm?: () => void;
 }
 
-const TOOLTIP_WIDTH = 300;
-const TOOLTIP_MARGIN = 16;
+const TOOLTIP_WIDTH = 320;
+const VIEWPORT_MARGIN = 12;
 
 /**
- * Positions itself below the cutout (or centered if no target).
- * Stays within viewport horizontally.
+ * Positions itself near the cutout, clamped to viewport.
+ * Flips above/below when it would overflow. Scrolls target into view if needed.
  */
 export default function StepTooltip({
   title,
@@ -39,32 +41,65 @@ export default function StepTooltip({
   onStuck,
   onManualConfirm,
 }: StepTooltipProps) {
-  let top = '50%';
-  let left = '50%';
-  let transform = 'translate(-50%, -50%)';
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState<React.CSSProperties>({
+    position: 'fixed',
+    width: TOOLTIP_WIDTH,
+    zIndex: 9999,
+  });
 
-  if (cutout) {
-    const rawTop = cutout.top + cutout.height + TOOLTIP_MARGIN;
-    const rawLeft = cutout.left + cutout.width / 2 - TOOLTIP_WIDTH / 2;
-    const clampedLeft = Math.max(
-      TOOLTIP_MARGIN,
-      Math.min(rawLeft, window.innerWidth - TOOLTIP_WIDTH - TOOLTIP_MARGIN)
-    );
-    // If not enough space below, place above
-    const below = rawTop + 200 < window.innerHeight;
-    const finalTop = below
-      ? rawTop
-      : cutout.top - 200 - TOOLTIP_MARGIN;
+  useEffect(() => {
+    if (!cutout || !tooltipRef.current) {
+      // Centered fallback when no target
+      setStyle({
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: TOOLTIP_WIDTH,
+        zIndex: 9999,
+      });
+      return;
+    }
 
-    top = `${finalTop}px`;
-    left = `${clampedLeft}px`;
-    transform = 'none';
-  }
+    const tooltipHeight = tooltipRef.current.offsetHeight || 250;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Try positioning below first
+    let top = cutout.top + cutout.height + 16;
+    let flipAbove = false;
+
+    // If tooltip would overflow bottom, flip above
+    if (top + tooltipHeight + VIEWPORT_MARGIN > viewportHeight) {
+      const aboveTop = cutout.top - tooltipHeight - 16;
+      if (aboveTop >= VIEWPORT_MARGIN) {
+        top = aboveTop;
+        flipAbove = true;
+      }
+    }
+
+    // Clamp top to viewport
+    top = Math.max(VIEWPORT_MARGIN, Math.min(top, viewportHeight - tooltipHeight - VIEWPORT_MARGIN));
+
+    // Center horizontally on cutout, then clamp
+    let left = cutout.left + cutout.width / 2 - TOOLTIP_WIDTH / 2;
+    left = Math.max(VIEWPORT_MARGIN, Math.min(left, viewportWidth - TOOLTIP_WIDTH - VIEWPORT_MARGIN));
+
+    setStyle({
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: TOOLTIP_WIDTH,
+      zIndex: 9999,
+    });
+  }, [cutout]);
 
   return (
     <div
+      ref={tooltipRef}
       className="step-tooltip"
-      style={{ position: 'fixed', top, left, transform, width: TOOLTIP_WIDTH, zIndex: 9999 }}
+      style={style}
       role="dialog"
       aria-modal="false"
       aria-label={`Step ${stepIndex + 1}: ${title}`}
@@ -81,7 +116,7 @@ export default function StepTooltip({
       {/* Instruction */}
       {missingTarget ? (
         <p className="step-tooltip-instruction step-tooltip-instruction--warn">
-          ⚠️ We couldn't find the right spot on the screen. You can skip this step or let us know you're stuck.
+          ⚠️ We couldn't find the right spot on the screen. You can retry, skip this step, or talk to a human.
         </p>
       ) : (
         <p className="step-tooltip-instruction">{instruction}</p>

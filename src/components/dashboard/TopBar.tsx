@@ -10,11 +10,7 @@ export default function TopBar({ title }: TopBarProps) {
       <h1 className="topbar-title">{title}</h1>
 
       <div className="topbar-center">
-        <button className="topbar-search" data-tour="ask-me-anything">
-          <span className="topbar-search-icon">✦ 🔍</span>
-          <span>Ask me anything</span>
-          <span className="topbar-search-close">✕</span>
-        </button>
+        {/* Rio button removed - use the floating Rio widget instead */}
       </div>
 
       <div className="topbar-right">

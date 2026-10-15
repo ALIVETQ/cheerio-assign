@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRio } from '../../context/RioContext';
+import { useEngine } from '../../context/EngineContext';
 import MessageList from './MessageList';
 
 const MAX_INPUT_LENGTH = 500;
@@ -10,12 +11,48 @@ export default function RioWidget() {
     isOpen, isCompact, workflowStepLabel, messages,
     togglePanel, closePanel, collapseToCompact, expandFromCompact,
     sendMessage, dismissOffer, acceptOffer, isTyping, isHandoffSharing,
-    focusNonce, requestInputFocus, requestHandoff,
+    focusNonce, requestInputFocus, requestHandoff, setMessages,
   } = useRio();
+  
+  // Engine is optional - may not be available in isolated test contexts
+  let engineActions: ReturnType<typeof useEngine>['actions'] | undefined;
+  let engineState: ReturnType<typeof useEngine>['state'] | undefined;
+  try {
+    const engine = useEngine();
+    engineActions = engine.actions;
+    engineState = engine.state;
+  } catch {
+    // Not in EngineProvider context - that's okay
+  }
 
   const [inputValue, setInputValue] = useState('');
   const [inputError, setInputError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleResumeGuide = useCallback(() => {
+    if (engineState?.status === 'stuck' && engineActions) {
+      engineActions.next();
+    }
+  }, [engineActions, engineState?.status]);
+
+  const handleStopGuide = useCallback(() => {
+    if (engineActions && setMessages) {
+      // Convert progress card to stopped summary
+      setMessages((prev) => {
+        const idx = prev.findIndex((m) => m.progress);
+        if (idx === -1) return prev;
+        const progressMsg = prev[idx];
+        const next = [...prev];
+        next[idx] = {
+          ...progressMsg,
+          progress: undefined,
+          text: `Stopped: ${progressMsg.progress?.workflowTitle} at step ${(progressMsg.progress?.stepIndex ?? 0) + 1}/${progressMsg.progress?.totalSteps}`,
+        };
+        return next;
+      });
+      engineActions.reset();
+    }
+  }, [engineActions, setMessages]);
 
   const handleSend = useCallback(() => {
     const trimmed = inputValue.trim();

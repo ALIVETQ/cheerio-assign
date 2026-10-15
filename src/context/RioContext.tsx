@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useRef,
+  useEffect,
   type ReactNode,
 } from 'react';
 import '../workflows/index';
@@ -68,6 +69,7 @@ interface RioContextValue {
   pushRioMessage: (msg: Omit<ChatMessage, 'id'>) => void;
   upsertProgressCard: (progress: NonNullable<ChatMessage['progress']>) => void;
   setWorkflowStepLabel: (label: string | null) => void;
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
 }
 
 export interface EngineHandoffBridge {
@@ -294,8 +296,16 @@ export function RioProvider({ children, onStartWorkflow, engineHandoff }: RioPro
     });
   }, [onStartWorkflow]);
 
+  // Expose setMessages for reset functionality
+  useEffect(() => {
+    (window as any).__clearProgressCards = () => {
+      setMessages((prev) => prev.filter((m) => !m.progress));
+    };
+    return () => delete (window as any).__clearProgressCards;
+  }, [setMessages]);
+
   return (
-    <RioContext
+    <RioContext.Provider
       value={{
         isOpen,
         isCompact,
@@ -317,10 +327,11 @@ export function RioProvider({ children, onStartWorkflow, engineHandoff }: RioPro
         pushRioMessage,
         upsertProgressCard,
         setWorkflowStepLabel,
+        setMessages,
       }}
     >
       {children}
-    </RioContext>
+    </RioContext.Provider>
   );
 }
 

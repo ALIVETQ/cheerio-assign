@@ -6,13 +6,13 @@
  */
 
 // Static imports work in both Vitest (TS) and Vercel Node (after compilation)
-import wfFirstCampaign from '../../src/workflows/wf-first-campaign.json';
-import wfTemplateRejected from '../../src/workflows/wf-template-rejected.json';
-import wfConnectWhatsapp from '../../src/workflows/wf-connect-whatsapp.json';
-import wfCreateTemplate from '../../src/workflows/wf-create-template.json';
-import wfChatbotFlow from '../../src/workflows/wf-chatbot-flow.json';
-import wfConnectShopify from '../../src/workflows/wf-connect-shopify.json';
-import wfAddContacts from '../../src/workflows/wf-add-contacts.json';
+import wfFirstCampaign from '../../src/workflows/wf-first-campaign.json' with { type: 'json' };
+import wfTemplateRejected from '../../src/workflows/wf-template-rejected.json' with { type: 'json' };
+import wfConnectWhatsapp from '../../src/workflows/wf-connect-whatsapp.json' with { type: 'json' };
+import wfCreateTemplate from '../../src/workflows/wf-create-template.json' with { type: 'json' };
+import wfChatbotFlow from '../../src/workflows/wf-chatbot-flow.json' with { type: 'json' };
+import wfConnectShopify from '../../src/workflows/wf-connect-shopify.json' with { type: 'json' };
+import wfAddContacts from '../../src/workflows/wf-add-contacts.json' with { type: 'json' };
 
 export interface WorkflowMeta {
   id: string;

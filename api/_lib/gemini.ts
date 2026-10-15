@@ -3,9 +3,9 @@
  * NEVER import this from browser/frontend code.
  */
 
-import { WORKFLOW_LIBRARY, isAllowedWorkflowId } from './workflows';
-import { callGeminiGenerate } from './geminiClient';
-import type { GeminiErrorCause } from './geminiClient';
+import { WORKFLOW_LIBRARY, isAllowedWorkflowId } from './workflows.js';
+import { callGeminiGenerate } from './geminiClient.js';
+import type { GeminiErrorCause } from './geminiClient.js';
 
 export type { GeminiErrorCause };
 

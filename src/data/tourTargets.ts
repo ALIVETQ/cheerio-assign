@@ -58,5 +58,5 @@ export const REQUIRED_TOUR_TARGETS: Array<{ selector: string; route: string; des
   { selector: "[data-tour='sidebar-integrations']", route: '/', description: 'Integrations sidebar nav item' },
   { selector: "[data-tour='sidebar-workflows']", route: '/', description: 'Workflows sidebar nav item' },
   { selector: "[data-tour='support-view-btn']", route: '/', description: 'Support View button in top bar' },
-  { selector: "[data-tour='ask-me-anything']", route: '/', description: 'Ask me anything pill in top bar' },
+  // Note: 'ask-me-anything' removed - Rio is now accessed via floating widget
 ];

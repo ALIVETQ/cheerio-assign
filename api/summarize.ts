@@ -4,14 +4,14 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { callGeminiGenerate } from './_lib/geminiClient';
+import { callGeminiGenerate } from './_lib/geminiClient.js';
 import {
   buildTemplateSummary,
   type TicketReason,
   type TranscriptLine,
   type HandoffWorkflowSnap,
   type HandoffSummary,
-} from '../src/lib/handoffSummary';
+} from '../src/lib/handoffSummary.js';
 
 const MAX_LINES = 40;
 const MAX_TEXT = 500;

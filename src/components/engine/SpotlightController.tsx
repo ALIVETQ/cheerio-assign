@@ -24,6 +24,10 @@ export default function SpotlightController() {
     return null;
   }
 
+  const handleManualConfirm = () => {
+    actions.next();
+  };
+
   return (
     <Spotlight
       targetRef={targetRef}
@@ -37,8 +41,9 @@ export default function SpotlightController() {
       onBack={actions.back}
       onSkip={actions.skip}
       onStuck={actions.stuck}
-      onManualConfirm={actions.next}
+      onManualConfirm={handleManualConfirm}
       isManualConfirm={currentStep.completeOn.type === 'manualConfirm'}
+      onStop={actions.reset}
     />
   );
 }

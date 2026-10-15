@@ -95,7 +95,7 @@ describe('Test 1 – fallbackMatcher', () => {
     'my account is permanently banned',
     'I need legal help with this company',
     'asdfghjkl qwerty nonsense1234',
-    'hello world completely random text',
+    'xyzabc completely random text without greeting words',
     'my account is banned',
     'account ban ho gaya',
   ];

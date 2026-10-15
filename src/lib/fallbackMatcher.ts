@@ -3,13 +3,26 @@
  * One source of truth — do not duplicate this logic.
  */
 
-import { WORKFLOW_LIBRARY } from '../../api/_lib/workflows';
+import { WORKFLOW_LIBRARY } from '../../api/_lib/workflows.js';
 
 export interface FallbackResult {
   workflowId: string;
   confidence: number;
   reason: string;
 }
+
+// Greetings that get a friendly local reply without Gemini
+const GREETING_PATTERNS = [
+  /^hi\b/i,
+  /^hy\b/i,
+  /^hello\b/i,
+  /^hey\b/i,
+  /^namaste\b/i,
+  /^hola\b/i,
+  /^sup\b/i,
+];
+
+const GREETING_REPLY = "Hi! Tell me what you'd like to do in Cheerio, for example: set up my first WhatsApp campaign";
 
 const DENY_PATTERNS = [
   /\brefund\b/,
@@ -77,6 +90,17 @@ const MIN_SCORE = 1;
 
 export function fallbackMatch(rawMessage: string): FallbackResult | null {
   const msg = normalise(rawMessage);
+
+  // Check for greetings first
+  for (const pattern of GREETING_PATTERNS) {
+    if (pattern.test(rawMessage.trim())) {
+      return {
+        workflowId: 'greeting',
+        confidence: 1,
+        reason: GREETING_REPLY,
+      };
+    }
+  }
 
   for (const pattern of DENY_PATTERNS) {
     if (pattern.test(msg)) return null;

@@ -10,8 +10,8 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { callGeminiRouter } from './_lib/gemini';
-import { fallbackMatch } from './_lib/fallbackMatcher';
+import { callGeminiRouter } from './_lib/gemini.js';
+import { fallbackMatch } from './_lib/fallbackMatcher.js';
 
 const MAX_MESSAGE_LENGTH = 500;
 
@@ -52,6 +52,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ── Gemini failed — run fallback ──────────────────────────────────────────
   const fallbackCause = geminiResult.error.cause;
   const fallback = fallbackMatch(message);
+
+  // Greetings get special handling: return as if it's a successful match
+  if (fallback?.workflowId === 'greeting') {
+    return res.status(200).json({
+      workflowId: null,
+      confidence: 1,
+      reason: fallback.reason,
+      source: 'fallback',
+      fallbackCause: null,
+    });
+  }
 
   return res.status(200).json({
     workflowId: fallback?.workflowId ?? null,

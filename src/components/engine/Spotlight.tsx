@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useState, useRef, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import StepTooltip from './StepTooltip';
 
@@ -23,9 +23,11 @@ interface SpotlightProps {
   onStuck: () => void;
   onManualConfirm?: () => void;  // for manualConfirm steps
   isManualConfirm?: boolean;
+  onStop: () => void;
 }
 
 const PADDING = 8; // px padding around the highlighted element
+const MISSING_TARGET_TIMEOUT = 3000; // 3 seconds
 
 export default function Spotlight({
   targetRef,
@@ -40,8 +42,45 @@ export default function Spotlight({
   onStuck,
   onManualConfirm,
   isManualConfirm,
+  onStop,
 }: SpotlightProps) {
   const [rect, setRect] = useState<Rect | null>(null);
+  const [showOverlay, setShowOverlay] = useState(true);
+  const missingTimeoutRef = useRef<number | undefined>();
+
+  // Scroll target into view if off-screen
+  useEffect(() => {
+    const el = targetRef.current;
+    if (!el) return;
+
+    const bounds = el.getBoundingClientRect();
+    const inView = bounds.top >= 0 && bounds.bottom <= window.innerHeight &&
+                   bounds.left >= 0 && bounds.right <= window.innerWidth;
+
+    if (!inView) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
+  }, [targetRef]);
+
+  // Handle missing target timeout
+  useEffect(() => {
+    if (missingTarget) {
+      missingTimeoutRef.current = window.setTimeout(() => {
+        setShowOverlay(false);
+      }, MISSING_TARGET_TIMEOUT);
+    } else {
+      setShowOverlay(true);
+      if (missingTimeoutRef.current) {
+        clearTimeout(missingTimeoutRef.current);
+      }
+    }
+
+    return () => {
+      if (missingTimeoutRef.current) {
+        clearTimeout(missingTimeoutRef.current);
+      }
+    };
+  }, [missingTarget]);
 
   // Measure and track the target element's position
   useEffect(() => {
@@ -64,6 +103,17 @@ export default function Spotlight({
     };
   }, [targetRef]);
 
+  // Escape key handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onStop();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onStop]);
+
   const cutout = rect
     ? {
         top: rect.top - PADDING,
@@ -76,7 +126,7 @@ export default function Spotlight({
   return createPortal(
     <div className="spotlight-root" data-testid="spotlight">
       {/* Dark overlay with pointer-events punched out at the cutout */}
-      {cutout ? (
+      {showOverlay && cutout ? (
         <svg
           className="spotlight-overlay"
           style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
@@ -102,17 +152,17 @@ export default function Spotlight({
             mask="url(#spotlight-mask)"
           />
         </svg>
-      ) : (
-        /* No valid target: full dim */
+      ) : showOverlay && !cutout ? (
+        /* No valid target: full dim (but will clear after timeout) */
         <div
           className="spotlight-overlay spotlight-overlay--full"
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', pointerEvents: 'none' }}
           aria-hidden="true"
         />
-      )}
+      ) : null}
 
       {/* Pulsing ring around the highlighted element */}
-      {cutout && (
+      {showOverlay && cutout && (
         <div
           className="spotlight-ring"
           style={{
@@ -127,6 +177,29 @@ export default function Spotlight({
           aria-hidden="true"
         />
       )}
+
+      {/* Stop guide button - always visible */}
+      <button
+        className="spotlight-stop-btn"
+        onClick={onStop}
+        style={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          zIndex: 10000,
+          padding: '8px 16px',
+          background: 'rgba(0,0,0,0.8)',
+          color: 'white',
+          border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: 8,
+          cursor: 'pointer',
+          fontSize: 14,
+          fontWeight: 500,
+        }}
+        data-testid="spotlight-stop"
+      >
+        Stop guide
+      </button>
 
       {/* Tooltip */}
       <StepTooltip

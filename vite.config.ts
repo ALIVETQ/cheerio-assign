@@ -11,11 +11,19 @@ import type { IncomingMessage, ServerResponse } from 'http'
 function loadEnvLocal(): Record<string, string> {
   const envPath = resolve(process.cwd(), '.env.local')
   if (!existsSync(envPath)) return {}
-  const lines = readFileSync(envPath, 'utf8').split('\n')
+  const lines = readFileSync(envPath, 'utf8').split(/\r?\n/)
   const vars: Record<string, string> = {}
   for (const line of lines) {
     const match = line.match(/^([^#=]+)=(.*)$/)
-    if (match) vars[match[1].trim()] = match[2].trim()
+    if (!match) continue
+    const key = match[1].trim()
+    let value = match[2].trim()
+    // Strip surrounding quotes if present
+    if ((value.startsWith('"') && value.endsWith('"')) || 
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1)
+    }
+    vars[key] = value
   }
   return vars
 }
@@ -70,9 +78,18 @@ function apiMiddleware(): Connect.NextHandleFunction {
     } as unknown as import('@vercel/node').VercelResponse
 
     try {
-      // Dynamic import so handler sees the updated process.env
-      const mod = await import(/* @vite-ignore */ handlerPath + `?t=${Date.now()}`)
-      await mod.default(vercelReq, vercelRes)
+      // Use ssrLoadModule so Vite resolves TypeScript imports properly
+      const viteServer = (req as any).__viteServer
+      if (viteServer && typeof viteServer.ssrLoadModule === 'function') {
+        const mod = await viteServer.ssrLoadModule(handlerPath)
+        await mod.default(vercelReq, vercelRes)
+      } else {
+        // Fallback for non-Vite context (shouldn't happen in dev)
+        const { pathToFileURL } = await import('url')
+        const fileUrl = pathToFileURL(handlerPath).href
+        const mod = await import(/* @vite-ignore */ fileUrl + `?t=${Date.now()}`)
+        await mod.default(vercelReq, vercelRes)
+      }
     } catch (err) {
       console.error('[api-dev]', err)
       statusCode = 500
@@ -87,7 +104,22 @@ function apiMiddleware(): Connect.NextHandleFunction {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Add API middleware in dev only
+    ...(process.env.NODE_ENV !== 'production' ? [{
+      name: 'api-dev-middleware',
+      configureServer(server) {
+        // Inject Vite server into request for ssrLoadModule access
+        server.middlewares.use((req, _res, next) => {
+          (req as any).__viteServer = server
+          next()
+        })
+        server.middlewares.use(apiMiddleware())
+      },
+    }] : []),
+  ],
   test: {
     globals: true,
     environment: 'jsdom',
@@ -98,17 +130,4 @@ export default defineConfig({
   server: {
     middlewareMode: false,
   },
-  // Add API middleware in dev only
-  ...(process.env.NODE_ENV !== 'production' ? {
-    plugins: [
-      react(),
-      tailwindcss(),
-      {
-        name: 'api-dev-middleware',
-        configureServer(server) {
-          server.middlewares.use(apiMiddleware())
-        },
-      },
-    ],
-  } : {}),
 })
