@@ -12,6 +12,7 @@ import wfConnectWhatsapp from '../../src/workflows/wf-connect-whatsapp.json';
 import wfCreateTemplate from '../../src/workflows/wf-create-template.json';
 import wfChatbotFlow from '../../src/workflows/wf-chatbot-flow.json';
 import wfConnectShopify from '../../src/workflows/wf-connect-shopify.json';
+import wfAddContacts from '../../src/workflows/wf-add-contacts.json';
 
 export interface WorkflowMeta {
   id: string;
@@ -29,6 +30,7 @@ const RAW = [
   wfCreateTemplate,
   wfChatbotFlow,
   wfConnectShopify,
+  wfAddContacts,
 ] as const;
 
 export const WORKFLOW_LIBRARY: WorkflowMeta[] = RAW.map((w) => ({

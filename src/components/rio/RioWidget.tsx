@@ -57,6 +57,16 @@ export default function RioWidget() {
     requestHandoff('footer');
   }, [requestHandoff]);
 
+  // Close panel on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePanel();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, closePanel]);
+
   const stepLabel = workflowStepLabel;
 
   return (
@@ -115,7 +125,7 @@ export default function RioWidget() {
                     onClick={collapseToCompact}
                     aria-label="Collapse Rio panel"
                     data-testid="rio-collapse-btn"
-                    title="Minimise — workflow continues"
+                    title="Minimise — the guide continues"
                   >
                     ─
                   </button>

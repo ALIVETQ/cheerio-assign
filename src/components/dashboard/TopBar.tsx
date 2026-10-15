@@ -1,3 +1,5 @@
+import { resetDemo } from '../../lib/demoReset';
+
 interface TopBarProps {
   title: string;
 }
@@ -17,6 +19,14 @@ export default function TopBar({ title }: TopBarProps) {
 
       <div className="topbar-right">
         <span className="prototype-badge">Prototype</span>
+        <button
+          className="reset-demo-btn"
+          data-testid="reset-demo-btn"
+          onClick={resetDemo}
+          title="Clear all demo state and start fresh"
+        >
+          ↺ Reset demo
+        </button>
         <button
           className="support-view-btn"
           data-tour="support-view-btn"

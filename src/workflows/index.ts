@@ -13,6 +13,7 @@ import wfConnectWhatsappRaw from './wf-connect-whatsapp.json';
 import wfCreateTemplateRaw from './wf-create-template.json';
 import wfChatbotFlowRaw from './wf-chatbot-flow.json';
 import wfConnectShopifyRaw from './wf-connect-shopify.json';
+import wfAddContactsRaw from './wf-add-contacts.json';
 
 const rawWorkflows = [
   wfFirstCampaignRaw,
@@ -21,6 +22,7 @@ const rawWorkflows = [
   wfCreateTemplateRaw,
   wfChatbotFlowRaw,
   wfConnectShopifyRaw,
+  wfAddContactsRaw,
 ];
 
 rawWorkflows.forEach((raw) => {

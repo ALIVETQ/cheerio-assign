@@ -67,6 +67,10 @@ const EXTRA_KEYWORDS: KeywordEntry[] = [
   { term: 'shopify connect karo', workflowId: 'wf-connect-shopify', weight: 2 },
   { term: 'shopify integrate', workflowId: 'wf-connect-shopify', weight: 2 },
   { term: 'store connect', workflowId: 'wf-connect-shopify', weight: 1 },
+  { term: 'add contacts', workflowId: 'wf-add-contacts', weight: 2 },
+  { term: 'upload csv', workflowId: 'wf-add-contacts', weight: 2 },
+  { term: 'contacts add karo', workflowId: 'wf-add-contacts', weight: 2 },
+  { term: 'csv upload', workflowId: 'wf-add-contacts', weight: 2 },
 ];
 
 const MIN_SCORE = 1;

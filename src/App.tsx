@@ -8,35 +8,9 @@ import SpotlightController from './components/engine/SpotlightController';
 import { getWorkflow } from './workflows/loader';
 import type { WorkflowOffer } from './context/RioContext';
 import { useEffect, useCallback, useRef } from 'react';
-import { checkPreconditions } from './workflows/preconditionHelpers';
+import { checkPreconditions, offerForMissingPrerequisite } from './workflows/preconditionHelpers';
 import SupportPage from './pages/SupportPage';
 import type { EngineHandoffBridge } from './context/RioContext';
-
-// ─── Prereq offer builder ─────────────────────────────────────────────────────
-
-function buildPrereqOffer(failedKey: string): WorkflowOffer | null {
-  if (failedKey === 'whatsapp_connected') {
-    return {
-      workflowId: 'wf-connect-whatsapp',
-      title: 'Connect your WhatsApp number',
-      reason: "Before sending a campaign, you need to connect a WhatsApp number. Let me walk you through it.",
-      estimatedMinutes: 3,
-      source: 'gemini',
-      fallbackCause: null,
-    };
-  }
-  if (failedKey === 'has_approved_template') {
-    return {
-      workflowId: 'wf-create-template',
-      title: 'Create a message template',
-      reason: "You need at least one approved WhatsApp template before sending a campaign. Let me help you create one.",
-      estimatedMinutes: 3,
-      source: 'gemini',
-      fallbackCause: null,
-    };
-  }
-  return null;
-}
 
 // ─── Required credits for a campaign (fixed at 2 in the mock) ────────────────
 const REQUIRED_WHATSAPP_CREDITS = 2;
@@ -63,7 +37,7 @@ function AppShell() {
       if (workflow) {
         pushRioMessage({
           role: 'rio',
-          text: `✅ Done! You've completed "${workflow.title}". What would you like to do next?`,
+          text: `You're all done with "${workflow.title}" 🎉 What would you like to do next?`,
         });
       }
       openPanel();
@@ -89,7 +63,7 @@ function AppShell() {
           actions.stuck();
           pushRioMessage({
             role: 'rio',
-            text: `⚠️ You need at least ${REQUIRED_WHATSAPP_CREDITS} WhatsApp credits to send this campaign, but you only have ${available}. Please top up your credits or talk to a human for help.`,
+            text: `You need at least ${REQUIRED_WHATSAPP_CREDITS} WhatsApp credits to send this campaign, but you only have ${available}. Top up your credits, or talk to a human for help.`,
           });
           openPanel();
         }
@@ -150,14 +124,8 @@ function InnerApp() {
 
     const { ok, failedKey } = checkPreconditions(wf.preconditions ?? [], account);
     if (!ok && failedKey) {
-      if (failedKey === 'has_contacts') {
-        onPrereqFailed({
-          text: "It looks like you don't have any contacts yet. Head to the 'Build an audience' section on the Home page and upload a CSV file first. Come back and I'll guide you through the campaign!",
-        });
-      } else {
-        const prereqOffer = buildPrereqOffer(failedKey);
-        if (prereqOffer) onPrereqFailed({ offer: prereqOffer });
-      }
+      const prereqOffer = offerForMissingPrerequisite(failedKey);
+      if (prereqOffer) onPrereqFailed({ offer: prereqOffer });
       return;
     }
 

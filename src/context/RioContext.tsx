@@ -130,7 +130,7 @@ function buildReply(result: RouteResponse): Omit<ChatMessage, 'id'> {
 
   return {
     role: 'rio',
-    text: "I couldn't find a matching guide for that. Try rephrasing your question, or talk to a human.",
+    text: "I couldn't find a guide for that. Try rephrasing, or talk to a human and we'll sort it out.",
     noMatch: true,
     source: result.source,
     fallbackCause: result.fallbackCause,
@@ -179,7 +179,7 @@ export function RioProvider({ children, onStartWorkflow, engineHandoff }: RioPro
     if (sessionCountRef.current >= THROTTLE_SESSION_MAX) {
       pushRioMessage({
         role: 'rio',
-        text: "You've reached the message limit for this session. Please try again later or talk to a human.",
+        text: "You've reached the message limit for this session. Try again later, or talk to a human.",
       });
       return;
     }

@@ -1,0 +1,43 @@
+{
+  "id": "wf-add-contacts",
+  "title": "Add contacts from a CSV file",
+  "description": "Upload a contact list so you can send campaigns",
+  "keywords": ["contacts", "csv", "upload contacts", "add contacts", "contact list", "audience", "csv upload", "contacts add karo", "contacts upload", "audience banana"],
+  "examplePhrases": [
+    "I need to add contacts",
+    "how do I upload a CSV",
+    "contacts add karne hain"
+  ],
+  "level": 1,
+  "estimatedMinutes": 2,
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "ac1",
+      "title": "Open Build an audience",
+      "instruction": "On the home page, open the 'Build an audience' section.",
+      "target": "[data-tour='build-audience-accordion']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='build-audience-accordion']" },
+      "mode": "guide"
+    },
+    {
+      "id": "ac2",
+      "title": "Upload your CSV",
+      "instruction": "Click the CSV File tile to add a sample contact list.",
+      "target": "[data-tour='csv-upload-tile']",
+      "route": "/",
+      "completeOn": { "type": "click", "target": "[data-tour='csv-upload-tile']" },
+      "mode": "guide"
+    },
+    {
+      "id": "ac3",
+      "title": "Contacts are ready",
+      "instruction": "You should see CSV File marked Completed. You're ready to send campaigns.",
+      "target": "[data-tour='csv-upload-tile']",
+      "route": "/",
+      "completeOn": { "type": "manualConfirm" },
+      "mode": "guide"
+    }
+  ]
+}

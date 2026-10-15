@@ -302,3 +302,35 @@ describe('Test 11 – FallbackBadge', () => {
     expect(badge.getAttribute('title')).toContain('AI unavailable');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 6 — Keyboard tests (Escape and Enter)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('Phase 6 – Escape closes the panel', () => {
+  it('pressing Escape while the panel is open closes it', async () => {
+    const user = renderRio();
+    await openPanel(user);
+    expect(screen.getByTestId('rio-panel')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('rio-panel')).toBeNull());
+  });
+
+  it('Escape while panel is closed has no effect', async () => {
+    renderRio();
+    expect(screen.queryByTestId('rio-panel')).toBeNull();
+    await userEvent.setup().keyboard('{Escape}');
+    expect(screen.queryByTestId('rio-panel')).toBeNull();
+  });
+});
+
+describe('Phase 6 – Enter key sends message', () => {
+  it('Enter on a filled input sends the message and clears the field', async () => {
+    const user = renderRio();
+    await openPanel(user);
+    const input = screen.getByTestId('rio-input');
+    await user.type(input, 'Test message');
+    await user.keyboard('{Enter}');
+    expect(screen.getByText('Test message')).toBeInTheDocument();
+    expect((input as HTMLInputElement).value).toBe('');
+  });
+});

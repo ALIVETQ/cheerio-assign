@@ -299,7 +299,7 @@ describe('Test 8 – prompt injection', () => {
   beforeEach(() => { process.env.GEMINI_API_KEY = 'test-key'; });
   afterEach(()  => { delete process.env.GEMINI_API_KEY; vi.clearAllMocks(); });
 
-  const ALLOWED = ['wf-first-campaign','wf-template-rejected','wf-connect-whatsapp','wf-create-template','wf-chatbot-flow','wf-connect-shopify', null];
+  const ALLOWED = ['wf-first-campaign','wf-template-rejected','wf-connect-whatsapp','wf-create-template','wf-chatbot-flow','wf-connect-shopify','wf-add-contacts', null];
 
   it('injection phrase → allowed ID or null', async () => {
     ok(null, 0, 'not a valid request');
